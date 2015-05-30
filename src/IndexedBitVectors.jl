@@ -1,4 +1,4 @@
-module IndexableDicts
+module IndexedBitVectors
 
 export
     # types
