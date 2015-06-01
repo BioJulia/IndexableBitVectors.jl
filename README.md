@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/bicycle1885/IndexedBitVectors.jl.svg?branch=master)](https://travis-ci.org/bicycle1885/IndexedBitVectors.jl)
 
-**This package is under development.**
+**This package is now experimantal.**
 
 This package exports following operations over bit vectors with extremely fast speed while keeping extra memory usage small:
 
