@@ -3,7 +3,7 @@ module IndexedBitVectors
 export
     # types
     AbstractIndexedBitVector, AbstractBitVector,
-    SuccinctBitVector,
+    SuccinctBitVector, SucVector,
     # operations
     rank, rank0, rank1, select, select0, select1
 
@@ -15,5 +15,6 @@ typealias AbstractBitVector Union(BitVector,AbstractIndexedBitVector)
 include("common.jl")
 include("bitvector.jl")
 include("succbitvector.jl")
+include("sucvector.jl")
 
 end # module

@@ -1,6 +1,7 @@
 # simple succinct bit vector
 # --------------------------
 
+# Bitvector with cached rank values in two types of blocks (large blocks and small blocks).
 type SuccinctBitVector <: AbstractIndexedBitVector
     # data
     bits::BitVector

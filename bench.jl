@@ -27,10 +27,11 @@ function bench{T}(::Type{T}, len::Int, r=0.5)
 end
 
 let
-    for p in [4, 8, 12, 16]
+    for p in [4, 8, 12, 16, 20, 24]
         len = 2^p
         println("length: $len bits")
-        for t in [BitVector, SuccinctBitVector]
+        #for t in [BitVector, SuccinctBitVector, SucVector]
+        for t in [SuccinctBitVector, SucVector]
             bench(t, len)
         end
         println()
