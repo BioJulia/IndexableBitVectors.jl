@@ -145,6 +145,18 @@ function test_select{T}(::Type{T})
     for i in 1:1024; @fact select1(b, i) => select1(bitv, i); end
 end
 
+facts("CSucVector") do
+    context("access") do
+        test_access(SucVector)
+    end
+    context("rank") do
+        test_rank(CSucVector)
+    end
+    context("select") do
+        test_select(SucVector)
+    end
+end
+
 facts("SucVector") do
     context("access") do
         test_access(SucVector)

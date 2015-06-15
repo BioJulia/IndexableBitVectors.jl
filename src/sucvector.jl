@@ -16,7 +16,7 @@ const bits_per_block = 256
 
 function Block(chunks::NTuple{4,Uint64}, offset::Int)
     @assert offset ≤ 2^40
-    a = 0 + convert(Uint8, count_ones(chunks[1]))
+    a =     convert(Uint8, count_ones(chunks[1]))
     b = a + convert(Uint8, count_ones(chunks[2]))
     c = b + convert(Uint8, count_ones(chunks[3]))
     Block(chunks, offset, offset >>> 32, (a, b, c))

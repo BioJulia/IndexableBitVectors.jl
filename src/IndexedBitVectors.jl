@@ -3,7 +3,7 @@ module IndexedBitVectors
 export
     # types
     AbstractIndexedBitVector, AbstractBitVector,
-    SuccinctBitVector, SucVector,
+    SuccinctBitVector, SucVector, CSucVector,
     # operations
     rank, rank0, rank1, select, select0, select1
 
@@ -16,5 +16,6 @@ include("common.jl")
 include("bitvector.jl")
 include("succbitvector.jl")
 include("sucvector.jl")
+include("csucvector.jl")
 
 end # module
