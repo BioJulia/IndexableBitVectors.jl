@@ -8,17 +8,17 @@ function test_access{T}(::Type{T})
     @fact_throws b[0]
     @fact_throws b[1]
 
-    b = convert(T, [1])
+    b = convert(T, [true])
     @fact_throws b[0]
     @fact b[1] => 1
     @fact_throws b[2]
 
-    b = convert(T, [0])
+    b = convert(T, [false])
     @fact_throws b[0]
     @fact b[1] => 0
     @fact_throws b[2]
 
-    b = convert(T, [0, 0, 1, 1])
+    b = convert(T, [false, false, true, true])
     @fact_throws b[0]
     @fact b[1] => 0
     @fact b[2] => 0
@@ -194,4 +194,7 @@ facts("CSucVector") do
 end
 
 facts("RRR") do
+    context("access") do
+        test_access(RRR)
+    end
 end

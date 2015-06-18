@@ -93,15 +93,24 @@ function RRR(src::Union(BitVector,Vector))
     return RRR(ks, rs, superblocks, len)
 end
 
-length(rrr::RRR) = rrr.len
+function convert(::Type{RRR}, src::Union(BitVector,Vector))
+    return RRR(src)
+end
 
-function getindex(rrr::RRR, i::Int)
+length(rrr::RRR) = rrr.len
+endof(rrr::RRR) = rrr.len
+
+function getindex(rrr::RRR, i::Integer)
     @assert 1 ≤ i ≤ length(rrr)
     j = div(i - 1, blocksize) + 1
     k, r, _ = jthblock(rrr, j)
     bits = E[K[k+1]+r+1]
     bits <<= 16 - blocksize
     return bitat(Uint16, bits, rem(i - 1, blocksize) + 1)
+end
+
+function rank(rrr::RRR, i::Int)
+
 end
 
 # return the class of j-th block
