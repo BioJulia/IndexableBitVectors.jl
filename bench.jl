@@ -14,21 +14,24 @@ function bench{T}(::Type{T}, len::Int; r=0.5, random=false)
     select1(b, 1)
 
     gc()
+    n = 0
 
     t0 = time_ns()
-    for i in ord; b[i]; end
+    for i in ord; n += b[i]; end
     t1 = time_ns()
     @printf "%s (access) : %10.3f ns/op\n" T (t1 - t0) / len
 
     t0 = time_ns()
-    for i in ord; rank1(b, i); end
+    for i in ord; n += rank1(b, i); end
     t1 = time_ns()
     @printf "%s (rank1)  : %10.3f ns/op\n" T (t1 - t0) / len
 
     t0 = time_ns()
-    for i in ord; select1(b, i); end
+    for i in ord; n += select1(b, i); end
     t1 = time_ns()
     @printf "%s (select1): %10.3f ns/op\n" T (t1 - t0) / len
+
+    println(n)
 end
 
 let

@@ -1,6 +1,11 @@
 # simple succinct bit vector
 # --------------------------
 
+# Classical indexable bit vector implementation with 1/4 bits/bit additional space.
+# Exactly speaking, this data structure is not succinct: Θ(n) additional space is required rather than o(n).
+# But in practice, this is almost the same as theoretically optimal additional space and efficient in actual
+# computers.
+
 # Bitvector with cached rank values in two types of blocks (large blocks and small blocks).
 type SuccinctBitVector <: AbstractIndexedBitVector
     # data
@@ -83,12 +88,13 @@ function rank1(v::SuccinctBitVector, i::Int)
     end
     lbi = div(i - 1, size(LargeBlock))
     sbi = div(i - 1, size(SmallBlock))
-    byte = v.bits.chunks[sbi+1]
+    @inbounds byte = v.bits.chunks[sbi+1]
     r = rem(i, 64)
     if r != 0
         byte &= ~(typemax(Uint64) << r)
     end
-    return convert(Int, v.lbs[lbi+1] + v.sbs[sbi+1] + count_ones(byte))
+    @inbounds ret = v.lbs[lbi+1] + v.sbs[sbi+1] + count_ones(byte)
+    return convert(Int, ret)
 end
 
 # expand blocks to store 1 more bit if necessaary

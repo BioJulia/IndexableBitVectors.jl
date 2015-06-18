@@ -36,9 +36,10 @@ typedef struct sucvector_s {
 inline uint8_t count_ones(uint64_t x)
 {
 #if __POPCNT__
-    // SSE4 (-msse4) is needed.
+    // SSE4.2 (-msse4) is needed.
     return _mm_popcnt_u64(x);
 #else
+    // fallback method to count bits
     x = ((x & 0xaaaaaaaaaaaaaaaaUL) >> 1)
       +  (x & 0x5555555555555555UL);
     x = ((x & 0xccccccccccccccccUL) >> 2

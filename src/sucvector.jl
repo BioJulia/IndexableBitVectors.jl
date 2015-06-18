@@ -87,8 +87,6 @@ function unsafe_getindex(v::SucVector, i::Int)
     return bitat(chunk, r + 1)
 end
 
-bitat(chunk::Uint64, i::Int) = (chunk >>> (64 - i)) & 0x01 == 0x01
-
 function rank1(v::SucVector, i::Int)
     if !(0 ≤ i ≤ endof(v))
         throw(BoundsError())
