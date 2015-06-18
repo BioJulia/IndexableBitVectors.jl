@@ -10,23 +10,23 @@
 #    return rank(b, i) - rank(b, i - 1)
 #end
 
-function rank0(b::AbstractBitVector, i::Int)
+function rank0(b::AbstractBitVector, i::Integer)
     return i - rank1(b, i)
 end
 
-function rank(x::Integer, b::AbstractBitVector, i::Int)
+function rank(x::Integer, b::AbstractBitVector, i::Integer)
     return x == 0 ? rank0(b, i) : rank1(b, i)
 end
 
-function select0(b::AbstractBitVector, i::Int)
+function select0(b::AbstractBitVector, i::Integer)
     return select(0, b, i)
 end
 
-function select1(b::AbstractBitVector, i::Int)
+function select1(b::AbstractBitVector, i::Integer)
     return select(1, b, i)
 end
 
-function select(x::Integer, b::AbstractBitVector, i::Int)
+function select(x::Integer, b::AbstractBitVector, i::Integer)
     lo = 0
     hi = endof(b)
     if i == 0 || rank(x, b, hi) < i

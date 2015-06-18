@@ -23,7 +23,7 @@ immutable SuperBlock
     offset::Uint32
 end
 
-type RRR
+type RRR <: AbstractIndexedBitVector
     # class values for each block
     # class values are encoded in 4 bits, hence `ks` is a packed array of 4-bit elements
     ks::Vector{Uint8}
@@ -109,8 +109,14 @@ function getindex(rrr::RRR, i::Integer)
     return bitat(Uint16, bits, rem(i - 1, blocksize) + 1)
 end
 
-function rank(rrr::RRR, i::Int)
-
+function rank1(rrr::RRR, i::Integer)
+    @assert 0 ≤ i ≤ length(rrr)
+    j, rem = divrem(i - 1, blocksize)
+    k, r, rank = jthblock(rrr, j + 1)
+    bits = E[K[k+1]+r+1]
+    bits <<= 16 - blocksize
+    rank += count_ones(bits & lmask(Uint16, rem + 1))
+    return convert(Int, rank)
 end
 
 # return the class of j-th block
@@ -130,19 +136,19 @@ function jthblock(rrr::RRR, j::Int)
     i = div(j - 1, superblock_sampling_rate)
     superblock = rrr.superblocks[i+1]
     # read blocks just before the j-th block in the superblock
+    rank = superblock.rank
     offset = convert(Int, superblock.offset)
-    sumk = 0
     lo = i * superblock_sampling_rate + 1
     hi = j - 1
     for j′ in lo:hi
         k = classof(rrr, j′)
         offset += nbits(blocksize, k)
-        sumk += k
+        rank += k
     end
     # read the j-th block
     k = classof(rrr, j)
     r = read_rindex(rrr.rs, offset, nbits(blocksize, k))
-    return k, r, sumk
+    return k, r, rank
 end
 
 lmask{T<:Unsigned}(typ::Type{T}, n::Int) = typemax(typ) << (sizeof(typ) * 8 - n)

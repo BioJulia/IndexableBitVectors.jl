@@ -4,7 +4,7 @@ using FactCheck
 srand(12345)
 
 function test_access{T}(::Type{T})
-    b = convert(T, Int[])
+    b = convert(T, Bool[])
     @fact_throws b[0]
     @fact_throws b[1]
 
@@ -42,13 +42,13 @@ function test_access{T}(::Type{T})
 end
 
 function test_rank{T}(::Type{T})
-    b = convert(T, Int[])
+    b = convert(T, Bool[])
     @fact rank0(b, 0) => 0
     @fact_throws rank0(b, 1)
     @fact rank1(b, 0) => 0
     @fact_throws rank1(b, 1)
 
-    b = convert(T, [0])
+    b = convert(T, [false])
     @fact rank0(b, 0) => 0
     @fact rank0(b, 1) => 1
     @fact_throws rank0(b, 2)
@@ -56,7 +56,7 @@ function test_rank{T}(::Type{T})
     @fact rank1(b, 1) => 0
     @fact_throws rank1(b, 2)
 
-    b = convert(T, [1])
+    b = convert(T, [true])
     @fact rank0(b, 0) => 0
     @fact rank0(b, 1) => 0
     @fact_throws rank0(b, 2)
@@ -64,7 +64,7 @@ function test_rank{T}(::Type{T})
     @fact rank1(b, 1) => 1
     @fact_throws rank1(b, 2)
 
-    b = convert(T, [0, 0, 1, 1])
+    b = convert(T, [false, false, true, true])
     # rank0
     @fact rank0(b, 0) => 0
     @fact rank0(b, 1) => 1
@@ -99,11 +99,11 @@ function test_rank{T}(::Type{T})
 end
 
 function test_select{T}(::Type{T})
-    b = convert(T, Int[])
+    b = convert(T, Bool[])
     @fact select0(b, 0) => 0
     @fact select1(b, 0) => 0
 
-    b = convert(T, [0])
+    b = convert(T, [false])
     @fact select0(b, 0) => 0
     @fact select0(b, 1) => 1
     @fact select0(b, 2) => 0
@@ -111,7 +111,7 @@ function test_select{T}(::Type{T})
     @fact select1(b, 1) => 0
     @fact select1(b, 2) => 0
 
-    b = convert(T, [1])
+    b = convert(T, [true])
     @fact select0(b, 0) => 0
     @fact select0(b, 1) => 0
     @fact select0(b, 2) => 0
@@ -119,7 +119,7 @@ function test_select{T}(::Type{T})
     @fact select1(b, 1) => 1
     @fact select1(b, 2) => 0
 
-    b = convert(T, [0, 0, 1, 1])
+    b = convert(T, [false, false, true, true])
     # select0
     @fact select0(b, 0) => 0
     @fact select0(b, 1) => 1
@@ -144,6 +144,7 @@ function test_select{T}(::Type{T})
     for i in 1:1024; @fact select0(b, i) => select0(bitv, i); end
     for i in 1:1024; @fact select1(b, i) => select1(bitv, i); end
 end
+
 
 facts("SucVector") do
     context("access") do
@@ -197,4 +198,11 @@ facts("RRR") do
     context("access") do
         test_access(RRR)
     end
+    context("rank") do
+        test_rank(RRR)
+    end
+    context("select") do
+        test_select(RRR)
+    end
 end
+
