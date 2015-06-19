@@ -38,7 +38,7 @@ let
     for p in [4, 8, 12, 16, 20, 24]
         len = 2^p
         println("length: $len bits")
-        for t in [SuccinctBitVector, SucVector, CSucVector]
+        for t in [SuccinctBitVector, SucVector, CSucVector, RRR]
             bench(t, len, random=true)
         end
         println()

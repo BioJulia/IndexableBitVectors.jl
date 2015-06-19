@@ -122,7 +122,7 @@ end
 # return the class of j-th block
 function classof(rrr::RRR, j::Int)
     ki, rem = divrem(j - 1, 2)
-    k = rrr.ks[ki+1]
+    @inbounds k = rrr.ks[ki+1]
     if rem == 0
         k >>= 4
     else
@@ -136,7 +136,7 @@ function jthblock(rrr::RRR, j::Int)
     i = div(j - 1, superblock_sampling_rate)
     superblock = rrr.superblocks[i+1]
     # read blocks just before the j-th block in the superblock
-    rank = superblock.rank
+    rank = convert(Int, superblock.rank)
     offset = convert(Int, superblock.offset)
     lo = i * superblock_sampling_rate + 1
     hi = j - 1
@@ -183,7 +183,7 @@ function read_rindex(rs::Vector{Uint16}, offset::Int, len::Int)
         #----->|offset
         # |<->|rem
         #      |<-->|len
-        r = rs[ri+1] & rmask(Uint16, 16 - rem)
+        @inbounds r = rs[ri+1] & rmask(Uint16, 16 - rem)
         r >>= 16 - (rem + len)
     else
         # spans two elements
@@ -194,11 +194,11 @@ function read_rindex(rs::Vector{Uint16}, offset::Int, len::Int)
         # |<------->|rem
         #            |<---- -->|len
         # |<--------------- -->|rem+len
-        r1 = rs[ri+1] & rmask(Uint16, 16 - rem)
+        @inbounds r1 = rs[ri+1] & rmask(Uint16, 16 - rem)
         r1 <<= rem + len - 16
-        r2 = rs[ri+2] & lmask(Uint16, rem + len - 16)
+        @inbounds r2 = rs[ri+2] & lmask(Uint16, rem + len - 16)
         r2 >>= 32 - (rem + len)
-        r = r1 + r2
+        r = convert(Uint16, r1 + r2)
     end
     return convert(Int, r)
 end
@@ -269,10 +269,10 @@ const E, K = let
     bitss, offsets
 end
 
-const NBits = [iceil(log2(binomial(blocksize, k))) for k in 0:blocksize]
+# Lookup table to know the number of bits to encode class k's r-index with length t
+const NBits = [t ≥ k ? iceil(log2(binomial(t, k))) : 0 for t in 1:blocksize, k in 0:blocksize]
 
 function nbits(t, k)
-    @assert t == blocksize
-    return NBits[k+1]
+    return NBits[t,k+1]
 end
 
