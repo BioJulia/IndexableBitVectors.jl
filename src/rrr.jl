@@ -62,7 +62,7 @@ function RRR(src::Union(BitVector,Vector))
         k = count_ones(bits)
         r = bits2rindex(bits, blocksize, k)
         @assert 0 ≤ k ≤ blocksize
-        @assert 0 ≤ r < binomial(blocksize, k)
+        @assert 0 ≤ r < Comb[blocksize,k]
         rank += k
 
         # store the class to ks
@@ -232,7 +232,7 @@ function bits2rindex(bits::Uint64, t::Int, k::Int)
     i = 65 - t
     while k > 0
         if bitat(bits, 65 - t)
-            r += binomial(t - 1, k)
+            r += Comb[t-1,k]
             k -= 1
         end
         i += 1
@@ -243,14 +243,14 @@ end
 
 # Inverse transformation of bits2rindex (decoding).
 function rindex2bits(r::Int, t::Int, k::Int)
-    @assert 0 ≤ r < binomial(t, k)
+    @assert 0 ≤ r < Comb[t,k]
     @assert 0 ≤ k ≤ t ≤ 64
     bits = zero(Uint64)
     while r > 0
-        if r ≥ binomial(t - 1, k)
+        if r ≥ Comb[t-1,k]
             # the first bit is 1
             bits |= 1 << (t - 1)
-            r -= binomial(t - 1, k)
+            r -= Comb[t-1,k]
             k -= 1
         end
         t -= 1
@@ -259,24 +259,34 @@ function rindex2bits(r::Int, t::Int, k::Int)
     return bits
 end
 
+# Look-up Tables
+# --------------
+
+immutable CombinationTable
+    table::Matrix{Int}
+end
+
+getindex(comb::CombinationTable, t::Int, k::Int) = comb.table[t+1,k+1]
+
+const Comb = CombinationTable([binomial(t, k) for t in 0:63, k in 0:63])
+
 # enumeration of bit patterns for blocks, sorted by class and r-index
 const E, K = let
-    t = 16
-    @assert t == blocksize + 1
+    t = blocksize + 1
     bitss = Uint16[]
     offsets = Int[]
     for k in 0:blocksize+1
         push!(offsets, length(bitss))
-        for r in 0:binomial(t, k)-1
+        for r in 0:Comb[t,k]-1
             bits = rindex2bits(r, t, k)
-            push!(bitss, convert(Uint16, bits))
+            push!(bitss, bits)
         end
     end
     bitss, offsets
 end
 
 # Lookup table to know the number of bits to encode class k's r-index with length t
-const NBits = [t ≥ k ? ceil(Int, log2(binomial(t, k))) : 0 for t in 1:blocksize, k in 0:blocksize]
+const NBits = [t ≥ k ? ceil(Int, log2(Comb[t,k])) : 0 for t in 1:blocksize, k in 0:blocksize]
 
 function nbits(t, k)
     return NBits[t,k+1]
