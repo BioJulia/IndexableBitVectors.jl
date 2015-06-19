@@ -9,10 +9,14 @@
 # Practical Rank / Select Queries over Arbitrary Sequences,
 # 080019(i), 176–187.
 
-const blocksize = 15
-const classsize =  4
+# sampling rate controls the tradeoff between performance and space
 const superblock_sampling_rate = 32  # blocks per superblock
+const blocksize = 15
 const superblocksize = blocksize * superblock_sampling_rate
+
+# bits:      ..|...............|...............|... ...|...............|..
+# blocks:      |   block j+1   |   block j+2   |  ...  |  block j+ssr  |
+# superblocks: |                       superblock                      |
 
 @assert 1 ≤ blocksize ≤ 63
 
@@ -131,6 +135,8 @@ function classof(rrr::RRR, j::Int)
     return k
 end
 
+# Compute the class and r-index of the j-th block, and
+# the rank value at the beginning of the j-th block
 function jthblock(rrr::RRR, j::Int)
     @assert 1 ≤ j
     i = div(j - 1, superblock_sampling_rate)
