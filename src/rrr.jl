@@ -276,7 +276,7 @@ const E, K = let
 end
 
 # Lookup table to know the number of bits to encode class k's r-index with length t
-const NBits = [t ≥ k ? iceil(log2(binomial(t, k))) : 0 for t in 1:blocksize, k in 0:blocksize]
+const NBits = [t ≥ k ? ceil(Int, log2(binomial(t, k))) : 0 for t in 1:blocksize, k in 0:blocksize]
 
 function nbits(t, k)
     return NBits[t,k+1]

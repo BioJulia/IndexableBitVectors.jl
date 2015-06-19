@@ -45,6 +45,19 @@ function select(x::Integer, b::AbstractBitVector, i::Integer)
     return lo
 end
 
+# estimation of the space in bytes
+function sizeof(v::AbstractIndexedBitVector)
+    size = 0
+    for name in names(v)
+        size += sizeof(v.(name))
+        if !isbits(typeof(v.(name)))
+            # word size in bytes
+            size += sizeof(Int)
+        end
+    end
+    return size
+end
+
 # Internal BitVecor
 # This mimics the behaviour of Base.BitVector. We could use
 # the Base.BitVecor, but we have to touch the internal members

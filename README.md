@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/bicycle1885/IndexedBitVectors.jl.svg?branch=master)](https://travis-ci.org/bicycle1885/IndexedBitVectors.jl)
 
-**This package is now experimantal.**
+**This package is now alpha version.**
 
 This package exports following operations over bit vectors with extremely fast speed while keeping extra memory usage small:
 
@@ -20,6 +20,7 @@ And other shortcuts:
 `AbstractIndexedBitVector`s:
 
 * `SuccinctBitVector`: rank values are precomputed in large and small blocks.
+* `RRR`: compressible succinct bit vector.
 
 ## Benchmarks:
 
