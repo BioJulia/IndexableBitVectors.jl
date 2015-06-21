@@ -19,17 +19,14 @@
 #
 # Navarro, G., & Providel, E. (2012). Fast , Small , Simple Rank / Select on Bitmaps, (1).
 
-# sampling rate controls the tradeoff between performance and space
-const superblock_sampling_rate = 16  # blocks per superblock
-const blocksize = 15
-const superblocksize = blocksize * superblock_sampling_rate
-
+# Data Layout
 # bits:      ..|...............|...............|... ...|...............|..
 # blocks:      |   block j+1   |   block j+2   |  ...  |  block j+ssr  |
 # superblocks: |                       superblock                      |
 
-@assert 1 ≤ blocksize ≤ 63
+const superblock_sampling_rate = 16  # blocks per superblock
 
+# sampling rate controls the tradeoff between performance and space
 immutable SuperBlock
     # partial sum of rank values
     rank::Uint32
@@ -50,10 +47,13 @@ type RRR <: AbstractIndexedBitVector
     len::Uint32
 end
 
+blocksizeof(rrr::Type{RRR}) = 15
+
 RRR() = RRR(Uint8[], Uint8[], SuperBlock[], 0)
 
 function RRR(src::Union(BitVector,Vector))
     len = length(src)
+    blocksize = blocksizeof(RRR)
     n_blocks = div(len - 1, blocksize) + 1
     ks = Uint8[]
     rs = Uint16[]
@@ -116,8 +116,9 @@ endof(rrr::RRR) = rrr.len
 
 function getindex(rrr::RRR, i::Integer)
     @assert 1 ≤ i ≤ length(rrr)
+    blocksize = blocksizeof(RRR)
     j = div(i - 1, blocksize) + 1
-    k, r, _ = jthblock(rrr, j, blocksize)
+    k, r, _ = jthblock(rrr, j)
     bits = E[K[k+1]+r+1]
     bits <<= 16 - blocksize
     return bitat(Uint16, bits, rem(i - 1, blocksize) + 1)
@@ -125,8 +126,9 @@ end
 
 function rank1(rrr::RRR, i::Integer)
     @assert 0 ≤ i ≤ length(rrr)
+    blocksize = blocksizeof(RRR)
     j, rem = divrem(i - 1, blocksize)
-    k, r, rank = jthblock(rrr, j + 1, blocksize)
+    k, r, rank = jthblock(rrr, j + 1)
     bits = E[K[k+1]+r+1]
     bits <<= 16 - blocksize
     rank += count_ones(bits & lmask(Uint16, rem + 1))
@@ -155,16 +157,18 @@ type RRRNP <: AbstractIndexedBitVector
     len::Uint32
 end
 
-const blocksize_np = 63
+blocksizeof(::Type{RRRNP}) = 63
 
 # 3 elements of ks store 4 classes
 # ks:      |........|........|........|  8bits for each
 # classes: |......       .... ..      |  6bits for each
 #          |      .. ....       ......|
 
+RRRNP() = RRRNP(Uint8[], Uint64[], SuperBlock[], 0)
+
 function RRRNP(src::Union(BitVector,Vector))
     len = length(src)
-    blocksize = blocksize_np
+    blocksize = blocksizeof(RRRNP)
     n_blocks = div(len - 1, blocksize) + 1
     ks = Uint8[]
     rs = Uint64[]
@@ -242,19 +246,21 @@ function getindex(rrr::RRRNP, i::Integer)
     if !(1 ≤ i ≤ endof(rrr))
         throw(BoundsError())
     end
-    j = div(i - 1, blocksize_np) + 1
-    k, r, _ = jthblock(rrr, j, blocksize_np)
-    bits = rindex2bits(r, blocksize_np, convert(Int, k))
-    bits <<= 64 - blocksize_np
-    return bitat(Uint64, bits, rem(i - 1, blocksize_np) + 1)
+    blocksize = blocksizeof(RRRNP)
+    j = div(i - 1, blocksize) + 1
+    k, r, _ = jthblock(rrr, j)
+    bits = rindex2bits(r, blocksize, convert(Int, k))
+    bits <<= 64 - blocksize
+    return bitat(Uint64, bits, rem(i - 1, blocksize) + 1)
 end
 
 function rank1(rrr::RRRNP, i::Integer)
     @assert 0 ≤ i ≤ length(rrr)
-    j, rem = divrem(i - 1, blocksize_np)
-    k, r, rank = jthblock(rrr, j + 1, blocksize_np)
-    bits = rindex2bits(r, blocksize_np, convert(Int, k))
-    bits <<= 64 - blocksize_np
+    blocksize = blocksizeof(RRRNP)
+    j, rem = divrem(i - 1, blocksize)
+    k, r, rank = jthblock(rrr, j + 1)
+    bits = rindex2bits(r, blocksize, convert(Int, k))
+    bits <<= 64 - blocksize
     rank += count_ones(bits & lmask(Uint64, rem + 1))
     return convert(Int, rank)
 end
@@ -280,10 +286,11 @@ end
 
 # Compute the class and r-index of the j-th block, and
 # the rank value at the beginning of the j-th block
-function jthblock(rrr::Union(RRR,RRRNP), j::Int, blocksize::Int)
+function jthblock(rrr::Union(RRR,RRRNP), j::Int)
     @assert 1 ≤ j
     i = div(j - 1, superblock_sampling_rate)
     superblock = rrr.superblocks[i+1]
+    blocksize = blocksizeof(typeof(rrr))
     # read blocks just before the j-th block in the superblock
     rank = convert(Int, superblock.rank)
     offset = convert(Int, superblock.offset)
@@ -416,10 +423,10 @@ const Comb = CombinationTable([binomial(t, k) for t in 0:63, k in 0:63])
 
 # enumeration of bit patterns for blocks, sorted by class and r-index
 const E, K = let
-    t = blocksize + 1
+    t = blocksizeof(RRR) + 1
     bitss = Uint16[]
     offsets = Int[]
-    for k in 0:blocksize+1
+    for k in 0:t
         push!(offsets, length(bitss))
         for r in 0:Comb[t,k]-1
             bits = rindex2bits(r, t, k)
