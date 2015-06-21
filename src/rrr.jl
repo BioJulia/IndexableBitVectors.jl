@@ -389,7 +389,9 @@ function getindex(comb::CombinationTable, t::Int, k::Int)
     return c
 end
 
-const Comb = CombinationTable([binomial(t, k) for t in 0:63, k in 0:63])
+@assert blocksizeof(RRR) ≤ blocksizeof(RRRNP)
+
+const Comb = CombinationTable([binomial(t, k) for t in 0:blocksizeof(RRRNP), k in 0:blocksizeof(RRRNP)])
 
 # enumeration of bit patterns for blocks, sorted by class and r-index
 const E, K = let
@@ -406,8 +408,8 @@ const E, K = let
     bitss, offsets
 end
 
-# Lookup table to know the number of bits to encode class k's r-index with length t
-const NBits = [t ≥ k ? ceil(Int, log2(Comb[t,k])) : 0 for t in 1:63, k in 0:63]
+# Lookup table to know the number of bits to encode class k's r-indices with blocksize t
+const NBits = [t ≥ k ? ceil(Int, log2(Comb[t,k])) : 0 for t in 1:blocksizeof(RRRNP), k in 0:blocksizeof(RRRNP)]
 
 function nbits(t, k)
     return NBits[t,k+1]
