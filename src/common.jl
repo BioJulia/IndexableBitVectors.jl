@@ -3,12 +3,12 @@
 
 # the following methods are derived from the rank1 method
 
-#function getindex(b::AbstractBitVector, i::Int)
-#    if i == 0
-#        return 0
-#    end
-#    return rank(b, i) - rank(b, i - 1)
-#end
+function getindex(b::AbstractIndexableBitVector, i::Int)
+    if i == 0
+        return 0
+    end
+    return rank(b, i) - rank(b, i - 1)
+end
 
 function rank0(b::AbstractBitVector, i::Integer)
     return i - rank1(b, i)
