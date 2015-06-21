@@ -276,9 +276,6 @@ function jthblock(rrr::Union(RRR,RRRNP), j::Int)
     return k, r, rank
 end
 
-lmask{T<:Unsigned}(typ::Type{T}, n::Int) = typemax(typ) << (bitsof(typ) - n)
-rmask{T<:Unsigned}(typ::Type{T}, n::Int) = typemax(typ) >> (bitsof(typ) - n)
-
 # return left-aligned bits
 function read_bits(src::Union(BitVector,Vector), from::Int, len::Int)
     @assert 1 ≤ len ≤ 64
@@ -417,6 +414,3 @@ const NBitsTable = [t ≥ k ? ceil(Int, log2(Comb[t,k])) : 0 for t in 1:blocksiz
 function nbits(t, k)
     return NBitsTable[t,k+1]
 end
-
-# assume 1 byte = 8 bits
-bitsof{T<:Unsigned}(::Type{T}) = sizeof(T) * 8
