@@ -29,9 +29,9 @@ const superblock_sampling_rate = 16  # blocks per superblock
 # sampling rate controls the tradeoff between performance and space
 immutable SuperBlock
     # partial sum of rank values
-    rank::Uint32
+    rank::Uint64
     # offset of the starting position of r-index
-    offset::Uint32
+    offset::Uint64
 end
 
 type RRR <: AbstractIndexedBitVector
@@ -44,7 +44,7 @@ type RRR <: AbstractIndexedBitVector
     # sampled blocks
     superblocks::Vector{SuperBlock}
     # length of bits
-    len::Uint32
+    len::Int
 end
 
 blocksizeof(::Type{RRR}) = 15
@@ -102,7 +102,7 @@ type RRRNP <: AbstractIndexedBitVector
     ks::Vector{Uint8}
     rs::Vector{Uint64}
     superblocks::Vector{SuperBlock}
-    len::Uint32
+    len::Int
 end
 
 blocksizeof(::Type{RRRNP}) = 63
@@ -172,6 +172,9 @@ end
 
 function make_rrr{T<:Union(RRR,RRRNP)}(::Type{T}, src::Union(BitVector,Vector))
     len = length(src)
+    if len > typemax(Int)
+        error("the bit vector is too large")
+    end
     blocksize = blocksizeof(T)
     n_blocks = div(len - 1, blocksize) + 1
     ks = Uint8[]
@@ -187,7 +190,7 @@ function make_rrr{T<:Union(RRR,RRRNP)}(::Type{T}, src::Union(BitVector,Vector))
         end
 
         # bits and class
-        bits = packbits(src, (i - 1) * blocksize + 1, blocksize)
+        bits = read_bits(src, (i - 1) * blocksize + 1, blocksize)
         k = convert(eltype(ks), count_ones(bits))
         @assert 0 ≤ k ≤ blocksize
         rank += k
@@ -277,7 +280,7 @@ lmask{T<:Unsigned}(typ::Type{T}, n::Int) = typemax(typ) << (bitsof(typ) - n)
 rmask{T<:Unsigned}(typ::Type{T}, n::Int) = typemax(typ) >> (bitsof(typ) - n)
 
 # return left-aligned bits
-function packbits(src::Union(BitVector,Vector), from::Int, len::Int)
+function read_bits(src::Union(BitVector,Vector), from::Int, len::Int)
     @assert 1 ≤ len ≤ 64
     bits = zero(Uint64)
     to = from + len - 1
