@@ -61,22 +61,24 @@ length(rrr::RRR) = rrr.len
 endof(rrr::RRR) = rrr.len
 
 function getindex(rrr::RRR, i::Integer)
-    @assert 1 ≤ i ≤ length(rrr)
+    if !(1 ≤ i ≤ endof(rrr))
+        throw(BoundsError())
+    end
     blocksize = blocksizeof(RRR)
     j = div(i - 1, blocksize) + 1
     k, r, _ = jthblock(rrr, j)
-    bits = E[K[k+1]+r+1]
-    bits <<= 16 - blocksize
+    bits = E[K[k+1]+r+1] << (16 - blocksize)
     return bitat(Uint16, bits, rem(i - 1, blocksize) + 1)
 end
 
 function rank1(rrr::RRR, i::Integer)
-    @assert 0 ≤ i ≤ length(rrr)
+    if !(0 ≤ i ≤ endof(rrr))
+        throw(BoundsError())
+    end
     blocksize = blocksizeof(RRR)
     j, rem = divrem(i - 1, blocksize)
     k, r, rank = jthblock(rrr, j + 1)
-    bits = E[K[k+1]+r+1]
-    bits <<= 16 - blocksize
+    bits = E[K[k+1]+r+1] << (16 - blocksize)
     rank += count_ones(bits & lmask(Uint16, rem + 1))
     return convert(Int, rank)
 end
@@ -128,18 +130,18 @@ function getindex(rrr::RRRNP, i::Integer)
     blocksize = blocksizeof(RRRNP)
     j = div(i - 1, blocksize) + 1
     k, r, _ = jthblock(rrr, j)
-    bits = rindex2bits(r, blocksize, convert(Int, k))
-    bits <<= 64 - blocksize
+    bits = rindex2bits(r, blocksize, convert(Int, k)) << (64 - blocksize)
     return bitat(Uint64, bits, rem(i - 1, blocksize) + 1)
 end
 
 function rank1(rrr::RRRNP, i::Integer)
-    @assert 0 ≤ i ≤ length(rrr)
+    if !(0 ≤ i ≤ endof(rrr))
+        throw(BoundsError())
+    end
     blocksize = blocksizeof(RRRNP)
     j, rem = divrem(i - 1, blocksize)
     k, r, rank = jthblock(rrr, j + 1)
-    bits = rindex2bits(r, blocksize, convert(Int, k))
-    bits <<= 64 - blocksize
+    bits = rindex2bits(r, blocksize, convert(Int, k)) << (64 - blocksize)
     rank += count_ones(bits & lmask(Uint64, rem + 1))
     return convert(Int, rank)
 end
