@@ -1,0 +1,110 @@
+length: 64 bits = 8.0 B
+CompactBitVector (access) :      4.520 ns/op
+CompactBitVector (rank1)  :     13.613 ns/op
+CompactBitVector (select1):     17.848 ns/op
+sizeof(bitvector) = 37.0 B
+SucVector (access) :      9.066 ns/op
+SucVector (rank1)  :     11.966 ns/op
+SucVector (select1):     18.948 ns/op
+sizeof(bitvector) = 24.0 B
+CSucVector (access) :     12.735 ns/op
+CSucVector (rank1)  :    271.718 ns/op
+CSucVector (select1):     47.675 ns/op
+sizeof(bitvector) = 8.0 B
+RRR (access) :     40.516 ns/op
+RRR (rank1)  :     44.469 ns/op
+RRR (select1):     50.676 ns/op
+sizeof(bitvector) = 53.0 B
+RRRNP (access) :     32.084 ns/op
+RRRNP (rank1)  :     35.411 ns/op
+RRRNP (select1):     44.107 ns/op
+sizeof(bitvector) = 59.0 B
+
+length: 4096 bits = 512.0 B
+CompactBitVector (access) :      4.588 ns/op
+CompactBitVector (rank1)  :     12.744 ns/op
+CompactBitVector (select1):     20.012 ns/op
+sizeof(bitvector) = 664.0 B
+SucVector (access) :      9.750 ns/op
+SucVector (rank1)  :     17.157 ns/op
+SucVector (select1):     22.548 ns/op
+sizeof(bitvector) = 152.0 B
+CSucVector (access) :     12.639 ns/op
+CSucVector (rank1)  :     45.801 ns/op
+CSucVector (select1):     49.137 ns/op
+sizeof(bitvector) = 8.0 B
+RRR (access) :     60.732 ns/op
+RRR (rank1)  :     72.717 ns/op
+RRR (select1):     45.691 ns/op
+sizeof(bitvector) = 479.0 B
+RRRNP (access) :    111.960 ns/op
+RRRNP (rank1)  :    115.067 ns/op
+RRRNP (select1):     61.458 ns/op
+sizeof(bitvector) = 203.0 B
+
+length: 262144 bits = 32.0 KiB
+CompactBitVector (access) :      5.393 ns/op
+CompactBitVector (rank1)  :     12.772 ns/op
+CompactBitVector (select1):     23.027 ns/op
+sizeof(bitvector) = 40.0 KiB
+SucVector (access) :     22.477 ns/op
+SucVector (rank1)  :     33.571 ns/op
+SucVector (select1):     26.191 ns/op
+sizeof(bitvector) = 8.0 KiB
+CSucVector (access) :     13.350 ns/op
+CSucVector (rank1)  :     58.362 ns/op
+CSucVector (select1):     51.867 ns/op
+sizeof(bitvector) = 8.0 B
+RRR (access) :     92.118 ns/op
+RRR (rank1)  :     71.939 ns/op
+RRR (select1):     66.784 ns/op
+sizeof(bitvector) = 26.9 KiB
+RRRNP (access) :    113.008 ns/op
+RRRNP (rank1)  :    108.285 ns/op
+RRRNP (select1):     69.067 ns/op
+sizeof(bitvector) = 9.0 KiB
+
+length: 16777216 bits = 2.0 MiB
+CompactBitVector (access) :     55.734 ns/op
+CompactBitVector (rank1)  :     48.821 ns/op
+CompactBitVector (select1):     39.045 ns/op
+sizeof(bitvector) = 2.5 MiB
+SucVector (access) :    102.480 ns/op
+SucVector (rank1)  :    216.321 ns/op
+SucVector (select1):     43.498 ns/op
+sizeof(bitvector) = 512.0 KiB
+CSucVector (access) :     43.686 ns/op
+CSucVector (rank1)  :    128.347 ns/op
+CSucVector (select1):     78.046 ns/op
+sizeof(bitvector) = 8.0 B
+RRR (access) :    159.803 ns/op
+RRR (rank1)  :    157.148 ns/op
+RRR (select1):     96.650 ns/op
+sizeof(bitvector) = 1.7 MiB
+RRRNP (access) :    239.804 ns/op
+RRRNP (rank1)  :    160.187 ns/op
+RRRNP (select1):     77.910 ns/op
+sizeof(bitvector) = 572.8 KiB
+
+length: 1073741824 bits = 128.0 MiB
+CompactBitVector (access) :    713.828 ns/op
+CompactBitVector (rank1)  :    467.321 ns/op
+CompactBitVector (select1):     91.275 ns/op
+sizeof(bitvector) = 160.0 MiB
+SucVector (access) :    331.864 ns/op
+SucVector (rank1)  :    374.954 ns/op
+SucVector (select1):     60.637 ns/op
+sizeof(bitvector) = 32.0 MiB
+CSucVector (access) :     87.950 ns/op
+CSucVector (rank1)  :    159.703 ns/op
+CSucVector (select1):     57.117 ns/op
+sizeof(bitvector) = 8.0 B
+RRR (access) :   2510.311 ns/op
+RRR (rank1)  :    190.210 ns/op
+RRR (select1):    168.285 ns/op
+sizeof(bitvector) = 107.4 MiB
+RRRNP (access) :   1119.658 ns/op
+RRRNP (rank1)  :    357.120 ns/op
+RRRNP (select1):    101.903 ns/op
+sizeof(bitvector) = 35.8 MiB
+
