@@ -363,11 +363,12 @@ function rindex2bits(r::Int, t::Int, k::Int)
     @assert 0 ≤ r < Comb[t,k]
     @assert 0 ≤ k ≤ t ≤ 64
     bits = zero(Uint64)
-    while r > 0
-        if r ≥ Comb[t-1,k]
+    @inbounds while r > 0
+        c = Comb[t-1,k]
+        if r ≥ c
             # the first bit is 1
             bits |= 1 << (t - 1)
-            r -= Comb[t-1,k]
+            r -= c
             k -= 1
         end
         t -= 1
@@ -383,7 +384,10 @@ immutable CombinationTable
     table::Matrix{Int}
 end
 
-getindex(comb::CombinationTable, t::Int, k::Int) = comb.table[t+1,k+1]
+function getindex(comb::CombinationTable, t::Int, k::Int)
+    @inbounds c = comb.table[t+1,k+1]
+    return c
+end
 
 const Comb = CombinationTable([binomial(t, k) for t in 0:63, k in 0:63])
 
