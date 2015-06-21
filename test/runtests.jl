@@ -146,18 +146,6 @@ function test_select{T}(::Type{T})
 end
 
 
-facts("SucVector") do
-    context("access") do
-        test_access(SucVector)
-    end
-    context("rank") do
-        test_rank(SucVector)
-    end
-    context("select") do
-        test_select(SucVector)
-    end
-end
-
 facts("BitVector") do
     context("access") do
         test_access(BitVector)
@@ -179,6 +167,18 @@ facts("SuccinctBitVector") do
     end
     context("select") do
         test_select(SuccinctBitVector)
+    end
+end
+
+facts("SucVector") do
+    context("access") do
+        test_access(SucVector)
+    end
+    context("rank") do
+        test_rank(SucVector)
+    end
+    context("select") do
+        test_select(SucVector)
     end
 end
 

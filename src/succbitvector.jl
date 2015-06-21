@@ -16,6 +16,8 @@ type SuccinctBitVector <: AbstractIndexableBitVector
     sbs::Vector{Uint8}
 end
 
+maxlength(::Type{SuccinctBitVector}) = 2^40 - 1
+
 function SuccinctBitVector()
     return SuccinctBitVector(convert(BitVector, Bool[]), Uint32[], Uint8[])
 end
@@ -47,28 +49,21 @@ size(::Type{LargeBlock}) = 256
 const n_smallblocks_per_largeblock = div(size(LargeBlock), size(SmallBlock))
 
 function push!(v::SuccinctBitVector, bit::Bool)
-    if length(v) + 1 > typemax(Uint32)
+    len = length(v) + 1
+    if len > maxlength(SuccinctBitVector)
         error("overflow")
     end
-    # expand blocks if necessary
-    if expand!(v, SmallBlock)
-        k = rem(length(v.sbs), n_smallblocks_per_largeblock)
-        if k == 1
-            # the first small block within the current large block; this is always zero
-            v.sbs[end] = 0
-        else
-            v.sbs[end] = v.sbs[end-1] + count_ones(v.bits.chunks[end])
-        end
-    end
-    if expand!(v, LargeBlock)
-        # note that if large blocks are expanded, small blocks are expanded, too
-        if length(v.lbs) == 1
-            # the first large block is always filled with zero
-            v.lbs[end] = 0
-        else
-            prevrank = v.lbs[end-1] + v.sbs[end-1]
-            v.lbs[end] = prevrank + count_ones(v.bits.chunks[end])
-        end
+    ensureroom!(v, len)
+    if len % size(LargeBlock) == 1 && length(v.lbs) > 1
+        # the first bit of a large block
+        rank  = convert(Int, v.lbs[end-1])
+        rank += v.sbs[end-1]
+        rank += count_ones(v.bits.chunks[end])
+        v.lbs[end] = rank & typemax(Uint32)
+        v.sbs[end] = rank >> bitsof(Uint32)
+    elseif len % size(SmallBlock) == 1 && length(v.sbs) > 1
+        # the first bit of a small block
+        v.sbs[end] = v.sbs[end-1] + count_ones(v.bits.chunks[end])
     end
     push!(v.bits, bit)
     return v
@@ -78,40 +73,41 @@ push!(v::SuccinctBitVector, b::Integer) = push!(v::SuccinctBitVector, b != 0)
 length(v::SuccinctBitVector) = length(v.bits)
 endof(v::SuccinctBitVector)  = length(v.bits)
 
-getindex(v::SuccinctBitVector, i::Int) = v.bits[i]
+getindex(v::SuccinctBitVector, i::Integer) = v.bits[i]
 
 function rank1(v::SuccinctBitVector, i::Int)
-    if i == 0
-        return 0
-    elseif i > length(v)
+    if !(0 ≤ i ≤ endof(v))
         throw(BoundsError())
     end
-    lbi = div(i - 1, size(LargeBlock))
-    sbi = div(i - 1, size(SmallBlock))
-    @inbounds byte = v.bits.chunks[sbi+1]
+    if i == 0
+        return 0
+    end
+    lbi = div(i - 1, size(LargeBlock)) + 1
+    sbi = div(i - 1, size(SmallBlock)) + 1
+    @inbounds byte = v.bits.chunks[sbi]
     r = rem(i, 64)
     if r != 0
-        byte &= ~(typemax(Uint64) << r)
+        byte &= rmask(Uint64, r)
     end
-    @inbounds ret = v.lbs[lbi+1] + v.sbs[sbi+1] + count_ones(byte)
+    @inbounds ret = convert(Int, v.sbs[sbi-rem(sbi, n_smallblocks_per_largeblock)+1]) << bitsof(Uint32)
+    @inbounds ret += v.lbs[lbi] + v.sbs[sbi] + count_ones(byte)
     return convert(Int, ret)
 end
 
-# expand blocks to store 1 more bit if necessaary
-function expand!(v::SuccinctBitVector, ::Type{LargeBlock})
-    nbits = length(v)
-    if rem(nbits, size(LargeBlock)) == 0
-        push!(v.lbs, 0)
-        return true
+# ensure room to store `len` bits
+function ensureroom!(v::SuccinctBitVector, len::Int)
+    @assert len ≥ length(v)
+    n_required_sbs = div(len - 1, size(SmallBlock)) + 1
+    if n_required_sbs ≤ length(v.sbs)
+        # enough space to hold `len` bits
+        return v
     end
-    return false
-end
-
-function expand!(v::SuccinctBitVector, ::Type{SmallBlock})
-    nbits = length(v)
-    if rem(nbits, size(SmallBlock)) == 0
-        push!(v.sbs, 0)
-        return true
-    end
-    return false
+    len_sbs = length(v.sbs)
+    len_lbs = length(v.lbs)
+    resize!(v.sbs, n_required_sbs)
+    resize!(v.lbs, div(n_required_sbs - 1, 4) + 1)
+    for i in len_sbs+1:endof(v.sbs) v.sbs[i] = 0 end
+    for i in len_lbs+1:endof(v.lbs) v.lbs[i] = 0 end
+    @assert length(v.sbs) ≤ length(v.lbs) * n_smallblocks_per_largeblock
+    return v
 end
