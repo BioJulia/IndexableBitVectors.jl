@@ -20,5 +20,6 @@ include("succbitvector.jl")
 include("sucvector.jl")
 include("csucvector.jl")
 include("rrr.jl")
+include("derived.jl")
 
 end # module
