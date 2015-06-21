@@ -206,3 +206,14 @@ facts("RRR") do
     end
 end
 
+facts("RRRNP") do
+    context("access") do
+        test_access(RRRNP)
+    end
+    context("rank") do
+        test_rank(RRRNP)
+    end
+    context("select") do
+        test_select(RRRNP)
+    end
+end

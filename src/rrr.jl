@@ -1,6 +1,14 @@
 # RRR
 # ---
+#
+# This file implements two variants of the original RRR:
+# RRR: RRR of Claude and Navarro (2008)
+#   - The block size is 15 bits and the original block is decoded from a universal table.
+# * RRRNP: RRR of Navarro and Providel (2012)
+#   - The block size is 63 bits and the original block is decoded on the fly.
 
+
+# TODO: formatting citations
 # Raman, R., Raman, V., & Satti, S. R. (2007).
 # Succinct Indexable Dictionaries with Applications to Encoding k-ary Trees, Prefix Sums and Multisets,
 # 3(4), 1–25. doi:10.1145/1290672.1290680
@@ -8,9 +16,11 @@
 # Claude, F., & Navarro, G. (2008).
 # Practical Rank / Select Queries over Arbitrary Sequences,
 # 080019(i), 176–187.
+#
+# Navarro, G., & Providel, E. (2012). Fast , Small , Simple Rank / Select on Bitmaps, (1).
 
 # sampling rate controls the tradeoff between performance and space
-const superblock_sampling_rate = 32  # blocks per superblock
+const superblock_sampling_rate = 16  # blocks per superblock
 const blocksize = 15
 const superblocksize = blocksize * superblock_sampling_rate
 
@@ -107,7 +117,7 @@ endof(rrr::RRR) = rrr.len
 function getindex(rrr::RRR, i::Integer)
     @assert 1 ≤ i ≤ length(rrr)
     j = div(i - 1, blocksize) + 1
-    k, r, _ = jthblock(rrr, j)
+    k, r, _ = jthblock(rrr, j, blocksize)
     bits = E[K[k+1]+r+1]
     bits <<= 16 - blocksize
     return bitat(Uint16, bits, rem(i - 1, blocksize) + 1)
@@ -116,7 +126,7 @@ end
 function rank1(rrr::RRR, i::Integer)
     @assert 0 ≤ i ≤ length(rrr)
     j, rem = divrem(i - 1, blocksize)
-    k, r, rank = jthblock(rrr, j + 1)
+    k, r, rank = jthblock(rrr, j + 1, blocksize)
     bits = E[K[k+1]+r+1]
     bits <<= 16 - blocksize
     rank += count_ones(bits & lmask(Uint16, rem + 1))
@@ -135,9 +145,142 @@ function classof(rrr::RRR, j::Int)
     return k
 end
 
+
+# RRR of Navarro and Providel
+# the block size is 63 and the block is decoded on the fly.
+type RRRNP <: AbstractIndexedBitVector
+    ks::Vector{Uint8}
+    rs::Vector{Uint64}
+    superblocks::Vector{SuperBlock}
+    len::Uint32
+end
+
+const blocksize_np = 63
+
+# 3 elements of ks store 4 classes
+# ks:      |........|........|........|  8bits for each
+# classes: |......       .... ..      |  6bits for each
+#          |      .. ....       ......|
+
+function RRRNP(src::Union(BitVector,Vector))
+    len = length(src)
+    blocksize = blocksize_np
+    n_blocks = div(len - 1, blocksize) + 1
+    ks = Uint8[]
+    rs = Uint64[]
+    superblocks = SuperBlock[]
+    n_el_bits = bitsof(eltype(rs))
+    rank = 0
+    n_rembits = 0
+    for i in 1:n_blocks
+        # sample superblock
+        if i % superblock_sampling_rate == 1
+            superblock = SuperBlock(rank, sizeof(rs) * 8 - n_rembits + 1)
+            push!(superblocks, superblock)
+        end
+
+        # bits, class and r-index
+        bits = packbits(src, (i - 1) * blocksize + 1, blocksize)
+        k = count_ones(bits)
+        r = bits2rindex(bits, blocksize, k)
+        @assert 0 ≤ k ≤ blocksize
+        @assert 0 ≤ r < Comb[blocksize,k]
+        rank += k
+
+        # store the class to ks
+        if i % 4 == 1
+            push!(ks, 0, 0, 0)
+        end
+        @switch i % 4 begin
+            @case 1
+                ks[end-2] |= k << 2
+                break
+            @case 2
+                ks[end-2] |= k >> 4
+                ks[end-1] |= k << 4
+                break
+            @case 3
+                ks[end-1] |= k >> 2
+                ks[end]   |= k << 6
+                break
+            @case 0
+                ks[end]   |= k
+                break
+        end
+
+        # store the r-index to rs
+        if isempty(rs)
+            push!(rs, 0)
+            n_rembits += n_el_bits
+        end
+        # the number of bits required to store r-index
+        n_rbits = nbits(blocksize, k)
+        @assert n_rbits ≤ n_el_bits
+        if n_rembits ≥ n_rbits
+            # this r-index can be stored in the last element
+            rs[end] |= r << (n_rembits - n_rbits)
+        else
+            # this r-index spans the two last elements
+            rs[end] |= r >>> (n_rbits - n_rembits)
+            push!(rs, 0)
+            rs[end] |= r << (n_el_bits - (n_rbits - n_rembits))
+            n_rembits += n_el_bits
+        end
+        n_rembits -= n_rbits
+    end
+    return RRRNP(ks, rs, superblocks, len)
+end
+
+function convert(::Type{RRRNP}, src::Union(BitVector,Vector))
+    return RRRNP(src)
+end
+
+length(rrr::RRRNP) = rrr.len
+endof(rrr::RRRNP) = rrr.len
+
+function getindex(rrr::RRRNP, i::Integer)
+    if !(1 ≤ i ≤ endof(rrr))
+        throw(BoundsError())
+    end
+    j = div(i - 1, blocksize_np) + 1
+    k, r, _ = jthblock(rrr, j, blocksize_np)
+    bits = rindex2bits(r, blocksize_np, convert(Int, k))
+    bits <<= 64 - blocksize_np
+    return bitat(Uint64, bits, rem(i - 1, blocksize_np) + 1)
+end
+
+function rank1(rrr::RRRNP, i::Integer)
+    @assert 0 ≤ i ≤ length(rrr)
+    j, rem = divrem(i - 1, blocksize_np)
+    k, r, rank = jthblock(rrr, j + 1, blocksize_np)
+    bits = rindex2bits(r, blocksize_np, convert(Int, k))
+    bits <<= 64 - blocksize_np
+    rank += count_ones(bits & lmask(Uint64, rem + 1))
+    return convert(Int, rank)
+end
+
+function classof(rrr::RRRNP, j::Int)
+    ki, rem = divrem(j - 1, 4)
+    # NOTE: convert(Uint8, ...) is not needed in v0.4
+    if rem == 0
+        k = rrr.ks[3ki+1] >> 2
+    elseif rem == 1
+        k1 = (rmask(Uint8, 2) & rrr.ks[3ki+1]) << 4
+        k2 = rrr.ks[3ki+2] >> 4
+        k = convert(Uint8, k1 + k2)
+    elseif rem == 2
+        k1 = (rmask(Uint8, 4) & rrr.ks[3ki+2]) << 2
+        k2 = rrr.ks[3ki+3] >> 6
+        k = convert(Uint8, k1 + k2)
+    else # rem == 4
+        k = rrr.ks[3ki+3] & rmask(Uint8, 6)
+    end
+    return k
+end
+
 # Compute the class and r-index of the j-th block, and
 # the rank value at the beginning of the j-th block
-function jthblock(rrr::RRR, j::Int)
+function jthblock(rrr::Union(RRR,RRRNP), j::Int, blocksize::Int)
     @assert 1 ≤ j
     i = div(j - 1, superblock_sampling_rate)
     superblock = rrr.superblocks[i+1]
@@ -179,20 +322,21 @@ function packbits(src::Union(BitVector,Vector), from::Int, len::Int)
 end
 
 # offset is 1-based index
-function read_rindex(rs::Vector{Uint16}, offset::Int, len::Int)
-    ri, rem = divrem(offset - 1, 16)
-    if 16 - rem ≥ len
-        # stored in an element
+function read_rindex{T<:Unsigned}(rs::Vector{T}, offset::Int, len::Int)
+    w = bitsof(T)
+    ri, rem = divrem(offset - 1, w)
+    if w - rem ≥ len
+        # stored in an element (T = Uint16, w = 16)
         # |      ri+1      |      ri+2      |
         # |................|................|
         # |    xxxxxx      |                |
         #----->|offset
         # |<->|rem
         #      |<-->|len
-        @inbounds r = rs[ri+1] & rmask(Uint16, 16 - rem)
-        r >>= 16 - (rem + len)
+        @inbounds r = rs[ri+1] & rmask(T, w - rem)
+        r >>= w - (rem + len)
     else
-        # spans two elements
+        # spans two elements (T = Uint16, w = 16)
         # |      ri+1      |      ri+2      |
         # |................|................|
         # |          xxxxxx|xxxx            |
@@ -200,11 +344,11 @@ function read_rindex(rs::Vector{Uint16}, offset::Int, len::Int)
         # |<------->|rem
         #            |<---- -->|len
         # |<--------------- -->|rem+len
-        @inbounds r1 = rs[ri+1] & rmask(Uint16, 16 - rem)
-        r1 <<= rem + len - 16
-        @inbounds r2 = rs[ri+2] & lmask(Uint16, rem + len - 16)
-        r2 >>= 32 - (rem + len)
-        r = convert(Uint16, r1 + r2)
+        @inbounds r1 = rs[ri+1] & rmask(T, w - rem)
+        r1 <<= rem + len - w
+        @inbounds r2 = rs[ri+2] & lmask(T, rem + len - w)
+        r2 >>= 2w - (rem + len)
+        r = convert(T, r1 + r2)
     end
     return convert(Int, r)
 end
@@ -286,9 +430,11 @@ const E, K = let
 end
 
 # Lookup table to know the number of bits to encode class k's r-index with length t
-const NBits = [t ≥ k ? ceil(Int, log2(Comb[t,k])) : 0 for t in 1:blocksize, k in 0:blocksize]
+const NBits = [t ≥ k ? ceil(Int, log2(Comb[t,k])) : 0 for t in 1:63, k in 0:63]
 
 function nbits(t, k)
     return NBits[t,k+1]
 end
 
+# assume 1 byte = 8 bits
+bitsof{T<:Unsigned}(::Type{T}) = sizeof(T) * 8
