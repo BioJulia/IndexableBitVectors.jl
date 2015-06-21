@@ -3,12 +3,8 @@ import IndexableBitVectors
 
 srand(1024)
 
-function bench{T}(::Type{T}, len::Int; r=0.5, random=false)
-    b = convert(T, rand(len) .> r)
-    ord = collect(1:len)
-    if random
-        shuffle!(ord)
-    end
+function bench{T}(::Type{T}, len::Int, ord::Vector{Int}; r=0.5)
+    b = convert(T, rand(len) .> (1.0 - r))
     b[1]
     rank1(b, 1)
     select1(b, 1)
@@ -31,15 +27,32 @@ function bench{T}(::Type{T}, len::Int; r=0.5, random=false)
     t1 = time_ns()
     @printf "%s (select1): %10.3f ns/op\n" T (t1 - t0) / len
 
-    println(n)
+    #println(n)
 end
 
 let
+    random = false
+    r = 0.5
+    while !isempty(ARGS)
+        arg = shift!(ARGS)
+        if arg == "--random" || arg == "-r"
+            random = true
+        elseif arg == "--sparsity" || arg == "-s"
+            r = parse(Float64, shift!(ARGS))
+        else
+            error("$arg")
+        end
+    end
+
     for p in [4, 8, 12, 16, 20, 24]
         len = 2^p
+        ord = collect(1:len)
+        if random
+            shuffle!(ord)
+        end
         println("length: $len bits")
         for t in [SuccinctBitVector, SucVector, CSucVector, RRR, RRRNP]
-            bench(t, len, random=true)
+            bench(t, len, ord, r=r)
         end
         println()
     end
