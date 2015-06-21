@@ -84,7 +84,7 @@ function rank1(rrr::RRR, i::Integer)
 end
 
 # return the class of j-th block
-function classof(rrr::RRR, j::Int)
+@inline function classof(rrr::RRR, j::Int)
     ki, rem = divrem(j - 1, 2)
     @inbounds k = rrr.ks[ki+1]
     if rem == 0
@@ -149,7 +149,7 @@ end
 function classof(rrr::RRRNP, j::Int)
     ki, rem = divrem(j - 1, 4)
     # NOTE: convert(Uint8, ...) is not needed in v0.4
-    @switch rem begin
+    @inbounds @switch rem begin
         @case 0
             k = rrr.ks[3ki+1] >> 2
             break
@@ -273,8 +273,8 @@ function jthblock(rrr::Union(RRR,RRRNP), j::Int)
     return k, r, rank
 end
 
-lmask{T<:Unsigned}(typ::Type{T}, n::Int) = typemax(typ) << (sizeof(typ) * 8 - n)
-rmask{T<:Unsigned}(typ::Type{T}, n::Int) = typemax(typ) >> (sizeof(typ) * 8 - n)
+lmask{T<:Unsigned}(typ::Type{T}, n::Int) = typemax(typ) << (bitsof(typ) - n)
+rmask{T<:Unsigned}(typ::Type{T}, n::Int) = typemax(typ) >> (bitsof(typ) - n)
 
 # return left-aligned bits
 function packbits(src::Union(BitVector,Vector), from::Int, len::Int)
@@ -384,7 +384,7 @@ immutable CombinationTable
     table::Matrix{Int}
 end
 
-function getindex(comb::CombinationTable, t::Int, k::Integer)
+@inline function getindex(comb::CombinationTable, t::Int, k::Integer)
     @inbounds c = comb.table[t+1,k+1]
     return c
 end
@@ -409,10 +409,10 @@ const E, K = let
 end
 
 # Lookup table to know the number of bits to encode class k's r-indices with blocksize t
-const NBits = [t ≥ k ? ceil(Int, log2(Comb[t,k])) : 0 for t in 1:blocksizeof(RRRNP), k in 0:blocksizeof(RRRNP)]
+const NBitsTable = [t ≥ k ? ceil(Int, log2(Comb[t,k])) : 0 for t in 1:blocksizeof(RRRNP), k in 0:blocksizeof(RRRNP)]
 
 function nbits(t, k)
-    return NBits[t,k+1]
+    return NBitsTable[t,k+1]
 end
 
 # assume 1 byte = 8 bits
