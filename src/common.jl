@@ -1,7 +1,7 @@
 # estimation of the space in bytes
 function sizeof(v::AbstractIndexableBitVector)
     size = 0
-    for name in names(v)
+    for name in fieldnames(v)
         size += sizeof(v.(name))
         if !isbits(typeof(v.(name)))
             # word size in bytes
