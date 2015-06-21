@@ -4,7 +4,8 @@
 
 **This package is now alpha version.**
 
-This package exports following operations over bit vectors with extremely fast speed while keeping extra memory usage small:
+This package exports following operations over bit vectors with extremely fast
+speed while keeping extra memory usage small:
 
 * `getindex(bv::IndexableBitVectors, i::Integer)`: `i`-th element of `bv`
 * `rank(b::Bool, bv::AbstractIndexableBitVector, i::Integer)`: the number of occurrences of bit `b` in `bv[1:i]`
@@ -30,3 +31,5 @@ And other shortcuts:
 * [Sparse (0.10)](benchmarks/sparse.txt)
 * [Very Sparse (0.01)](benchmarks/very-sparse.txt)
 
+Please note that the estimated space of `SucVector` and `CSucVector` is not
+accurate.

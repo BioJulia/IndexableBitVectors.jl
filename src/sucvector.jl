@@ -4,7 +4,9 @@
 # Almost the same as CompactBitVector, but the layout of data is different.
 # Four chunks of bits are stored in a block and blocks are stored in a vector.
 # As a result, all data are interleaved and thus the CPU cache may be used
-# efficiently. Note that in v0.3 the blocks will not be packed in a vector.
+# efficiently.  The idea is taken from:
+# https://github.com/herumi/cybozulib/blob/master/include/cybozu/sucvector.hpp
+# Note that in v0.3 the blocks will not be packed in a vector.
 
 immutable Block
     # bit chunks (64bits × 4 = 256bits)
