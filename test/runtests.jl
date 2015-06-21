@@ -158,15 +158,15 @@ facts("BitVector") do
     end
 end
 
-facts("SuccinctBitVector") do
+facts("CompactBitVector") do
     context("access") do
-        test_access(SuccinctBitVector)
+        test_access(CompactBitVector)
     end
     context("rank") do
-        test_rank(SuccinctBitVector)
+        test_rank(CompactBitVector)
     end
     context("select") do
-        test_select(SuccinctBitVector)
+        test_select(CompactBitVector)
     end
 end
 

@@ -1,7 +1,7 @@
 # BitVector
 # ---------
 
-# This is slow, but simple and hence valuable as a reference implementation.
+# This is slow, but simple and valuable as a reference implementation.
 
 function rank1(b::BitVector, i::Int)
     n = 0

@@ -51,7 +51,7 @@ let
             shuffle!(ord)
         end
         println("length: $len bits")
-        for t in [SuccinctBitVector, SucVector, CSucVector, RRR, RRRNP]
+        for t in [CompactBitVector, SucVector, CSucVector, RRR, RRRNP]
             bench(t, len, ord, r=r)
         end
         println()
