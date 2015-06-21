@@ -147,18 +147,23 @@ end
 function classof(rrr::RRRNP, j::Int)
     ki, rem = divrem(j - 1, 4)
     # NOTE: convert(Uint8, ...) is not needed in v0.4
-    if rem == 0
-        k = rrr.ks[3ki+1] >> 2
-    elseif rem == 1
-        k1 = (rmask(Uint8, 2) & rrr.ks[3ki+1]) << 4
-        k2 = rrr.ks[3ki+2] >> 4
-        k = convert(Uint8, k1 + k2)
-    elseif rem == 2
-        k1 = (rmask(Uint8, 4) & rrr.ks[3ki+2]) << 2
-        k2 = rrr.ks[3ki+3] >> 6
-        k = convert(Uint8, k1 + k2)
-    else # rem == 4
-        k = rrr.ks[3ki+3] & rmask(Uint8, 6)
+    @switch rem begin
+        @case 0
+            k = rrr.ks[3ki+1] >> 2
+            break
+        @case 1
+            k1 = (rmask(Uint8, 2) & rrr.ks[3ki+1]) << 4
+            k2 = rrr.ks[3ki+2] >> 4
+            k = convert(Uint8, k1 + k2)
+            break
+        @case 2
+            k1 = (rmask(Uint8, 4) & rrr.ks[3ki+2]) << 2
+            k2 = rrr.ks[3ki+3] >> 6
+            k = convert(Uint8, k1 + k2)
+            break
+        @default  # @case 3
+            k = rrr.ks[3ki+3] & rmask(Uint8, 6)
+            break
     end
     return k
 end
@@ -212,7 +217,7 @@ function make_rrr{T<:Union(RRR,RRRNP)}(::Type{T}, src::Union(BitVector,Vector))
                     ks[end-1] |= k >> 2
                     ks[end]   |= k << 6
                     break
-                @case 0
+                @default  # @case 0
                     ks[end]   |= k
                     break
             end
