@@ -34,7 +34,7 @@ immutable SuperBlock
     offset::Uint64
 end
 
-type RRR <: AbstractIndexedBitVector
+type RRR <: AbstractIndexableBitVector
     # class values for each block
     # class values are encoded in 4 bits, hence `ks` is a packed array of 4-bit elements
     ks::Vector{Uint8}
@@ -98,7 +98,7 @@ end
 
 # RRR of Navarro and Providel
 # the block size is 63 and the block is decoded on the fly.
-type RRRNP <: AbstractIndexedBitVector
+type RRRNP <: AbstractIndexableBitVector
     ks::Vector{Uint8}
     rs::Vector{Uint64}
     superblocks::Vector{SuperBlock}

@@ -7,7 +7,7 @@
 # computers.
 
 # Bitvector with cached rank values in two types of blocks (large blocks and small blocks).
-type SuccinctBitVector <: AbstractIndexedBitVector
+type SuccinctBitVector <: AbstractIndexableBitVector
     # data
     bits::BitVector
     # large blocks

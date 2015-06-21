@@ -1,8 +1,8 @@
-module IndexedBitVectors
+module IndexableBitVectors
 
 export
     # types
-    AbstractIndexedBitVector, AbstractBitVector,
+    AbstractIndexableBitVector, AbstractBitVector,
     SuccinctBitVector, SucVector, CSucVector, RRR, RRRNP,
     # operations
     rank, rank0, rank1, select, select0, select1
@@ -11,8 +11,8 @@ import Base: rank, select, show, size, push!, getindex, length, endof, sizeof, c
 using Compat
 using Switch
 
-abstract AbstractIndexedBitVector <: DenseArray{Bool,1}
-typealias AbstractBitVector Union(BitVector,AbstractIndexedBitVector)
+abstract AbstractIndexableBitVector <: DenseArray{Bool,1}
+typealias AbstractBitVector Union(BitVector,AbstractIndexableBitVector)
 
 include("common.jl")
 include("bitvector.jl")

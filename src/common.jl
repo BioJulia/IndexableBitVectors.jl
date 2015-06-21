@@ -46,7 +46,7 @@ function select(x::Integer, b::AbstractBitVector, i::Integer)
 end
 
 # estimation of the space in bytes
-function sizeof(v::AbstractIndexedBitVector)
+function sizeof(v::AbstractIndexableBitVector)
     size = 0
     for name in names(v)
         size += sizeof(v.(name))

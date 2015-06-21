@@ -1,14 +1,14 @@
-# IndexedBitVectors
+# IndexableBitVectors
 
-[![Build Status](https://travis-ci.org/bicycle1885/IndexedBitVectors.jl.svg?branch=master)](https://travis-ci.org/bicycle1885/IndexedBitVectors.jl)
+[![Build Status](https://travis-ci.org/bicycle1885/IndexableBitVectors.jl.svg?branch=master)](https://travis-ci.org/bicycle1885/IndexableBitVectors.jl)
 
 **This package is now alpha version.**
 
 This package exports following operations over bit vectors with extremely fast speed while keeping extra memory usage small:
 
-* `getindex(bv::AbstractIndexedBitVector, i::Int)`: `i`-th element of `bv`
-* `rank(b::Bool, bv::AbstractIndexedBitVector, i::Int)`: the number of occurrences of bit `b` in `bv[1:i]`
-* `select(b::Bool, bv::AbstractIndexedBitVector, i::Int)`: the index of `i`-th occurrence of `b` in `bv`.
+* `getindex(bv::IndexableBitVectors, i::Int)`: `i`-th element of `bv`
+* `rank(b::Bool, bv::AbstractIndexableBitVector, i::Int)`: the number of occurrences of bit `b` in `bv[1:i]`
+* `select(b::Bool, bv::AbstractIndexableBitVector, i::Int)`: the index of `i`-th occurrence of `b` in `bv`.
 
 And other shortcuts:
 
@@ -17,7 +17,7 @@ And other shortcuts:
 * `select0(bv, i)` = `select(0, bv, i)`
 * `select1(bv, i)` = `select(1, bv, i)`
 
-`AbstractIndexedBitVector`s:
+`AbstractIndexableBitVector`s:
 
 * `SuccinctBitVector`: rank values are precomputed in large and small blocks.
 * `RRR`: compressible succinct bit vector.

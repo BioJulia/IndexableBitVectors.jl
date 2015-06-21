@@ -1,6 +1,6 @@
 const libbitvector = "deps/libbitvector"
 
-type CSucVector <: AbstractIndexedBitVector
+type CSucVector <: AbstractIndexableBitVector
     ptr::Ptr{Void}
 
     function CSucVector(src::Union(BitVector,Vector))
@@ -10,7 +10,7 @@ type CSucVector <: AbstractIndexedBitVector
         chunks = Uint64[]
         i = 1
         while i ≤ endof(src)
-            chunk = IndexedBitVectors.read_chunk(src, i)
+            chunk = IndexableBitVectors.read_chunk(src, i)
             push!(chunks, chunk)
             i += 64
         end

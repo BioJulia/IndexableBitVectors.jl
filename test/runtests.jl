@@ -1,4 +1,4 @@
-using IndexedBitVectors
+using IndexableBitVectors
 using FactCheck
 
 srand(12345)

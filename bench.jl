@@ -1,5 +1,5 @@
-using IndexedBitVectors
-import IndexedBitVectors
+using IndexableBitVectors
+import IndexableBitVectors
 
 srand(1024)
 
@@ -38,7 +38,7 @@ let
     for p in [4, 8, 12, 16, 20, 24]
         len = 2^p
         println("length: $len bits")
-        for t in [SuccinctBitVector, SucVector, CSucVector, RRR]
+        for t in [SuccinctBitVector, SucVector, CSucVector, RRR, RRRNP]
             bench(t, len, random=true)
         end
         println()

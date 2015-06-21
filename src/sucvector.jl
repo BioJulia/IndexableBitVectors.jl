@@ -22,7 +22,7 @@ function Block(chunks::NTuple{4,Uint64}, offset::Int)
     Block(chunks, offset, offset >>> 32, (a, b, c))
 end
 
-type SucVector <: AbstractIndexedBitVector
+type SucVector <: AbstractIndexableBitVector
     blocks::Vector{Block}
     len::Int
 end
