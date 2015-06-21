@@ -186,12 +186,10 @@ function make_rrr{T<:Union(RRR,RRRNP)}(::Type{T}, src::Union(BitVector,Vector))
             push!(superblocks, SuperBlock(rank, sizeof(rs) * 8 - n_rembits + 1))
         end
 
-        # bits, class and r-index
+        # bits and class
         bits = packbits(src, (i - 1) * blocksize + 1, blocksize)
-        k = count_ones(bits)
-        r = bits2rindex(bits, blocksize, k)
+        k = convert(eltype(ks), count_ones(bits))
         @assert 0 ≤ k ≤ blocksize
-        @assert 0 ≤ r < Comb[blocksize,k]
         rank += k
 
         # store the class to ks
@@ -228,6 +226,8 @@ function make_rrr{T<:Union(RRR,RRRNP)}(::Type{T}, src::Union(BitVector,Vector))
         end
 
         # store the r-index to rs
+        r = convert(eltype(rs), bits2rindex(bits, blocksize, k))
+        @assert 0 ≤ r < Comb[blocksize,k]
         if isempty(rs)
             push!(rs, 0)
             n_rembits += rs_el_bits
@@ -342,7 +342,7 @@ end
 # Inverse transformation of bits2rindex (encoding).
 # `bits` should be filled from the least significant bit.
 # For example, 0b00...001 is the first bits of the class k=1.
-function bits2rindex(bits::Uint64, t::Int, k::Int)
+function bits2rindex(bits::Uint64, t::Int, k::Integer)
     @assert count_ones(bits) == k
     @assert 0 ≤ k ≤ t ≤ 64
     r = 0
@@ -359,7 +359,7 @@ function bits2rindex(bits::Uint64, t::Int, k::Int)
 end
 
 # Inverse transformation of bits2rindex (decoding).
-function rindex2bits(r::Int, t::Int, k::Int)
+function rindex2bits(r::Int, t::Int, k::Integer)
     @assert 0 ≤ r < Comb[t,k]
     @assert 0 ≤ k ≤ t ≤ 64
     bits = zero(Uint64)
@@ -384,7 +384,7 @@ immutable CombinationTable
     table::Matrix{Int}
 end
 
-function getindex(comb::CombinationTable, t::Int, k::Int)
+function getindex(comb::CombinationTable, t::Int, k::Integer)
     @inbounds c = comb.table[t+1,k+1]
     return c
 end
