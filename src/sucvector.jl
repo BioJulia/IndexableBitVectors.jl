@@ -1,5 +1,11 @@
-# Large block including bits and small blocks
-# packed data block to enhance the efficient use of CPU cache
+# SucVector
+# ---------
+#
+# Almost the same as CompactBitVector, but the layout of data is different.
+# Four chunks of bits are stored in a block and blocks are stored in a vector.
+# As a result, all data are interleaved and thus the CPU cache may be used
+# efficiently. Note that in v0.3 the blocks will not be packed in a vector.
+
 immutable Block
     # bit chunks (64bits × 4 = 256bits)
     chunks::NTuple{4,Uint64}
@@ -15,7 +21,7 @@ const bits_per_chunk =  64
 const bits_per_block = 256
 
 function Block(chunks::NTuple{4,Uint64}, offset::Int)
-    @assert offset ≤ 2^40
+    @assert offset ≤ 2^40 - 1
     a =     convert(Uint8, count_ones(chunks[1]))
     b = a + convert(Uint8, count_ones(chunks[2]))
     c = b + convert(Uint8, count_ones(chunks[3]))
@@ -78,7 +84,6 @@ function getindex(v::SucVector, i::Integer)
     return unsafe_getindex(v, i)
 end
 
-# unsafe means the behavior is undefined when accessing an illegal index
 function unsafe_getindex(v::SucVector, i::Integer)
     q, r = divrem(i - 1, bits_per_block)
     block = v.blocks[q+1]
@@ -94,7 +99,7 @@ function rank1(v::SucVector, i::Integer)
     return unsafe_rank1(v, i)
 end
 
-function unsafe_rank1(v::SucVector, i::Int)
+function unsafe_rank1(v::SucVector, i::Integer)
     q, r = divrem(i - 1, bits_per_block)
     @inbounds block = v.blocks[q+1]
     ret = 0
@@ -107,7 +112,6 @@ function unsafe_rank1(v::SucVector, i::Int)
     end
     # remaining bits
     @inbounds chunk = block.chunks[q+1]
-    mask = typemax(Uint64) << (63 - r)
-    ret += count_ones(chunk & mask)
+    ret += count_ones(chunk & lmask(Uint64, r + 1))
     return ret
 end

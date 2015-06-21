@@ -1,3 +1,9 @@
+# CSucVector
+# ----------
+#
+# A variant of SucVector written in C. This is written to compare the
+# performance of the Julia and C implementations.
+
 const libbitvector = "deps/libbitvector"
 
 type CSucVector <: AbstractIndexableBitVector

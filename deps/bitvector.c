@@ -7,18 +7,7 @@
 #include "popcntintrin.h"
 #endif
 
-// Block of cached bit count.
-// Fields:
-//   chunks: payload of a bit vector separated into 4 chunks
-//   large:  cached bit count of a bit vector
-//   ext:    extension of the `large` field; 32 bits + 8 bits = 40 bits
-//   smalls: block-local bit count; smalls[i] stores the number of 1s in chunks[i] for i=0,1,2
-// The extended large bit count can be computed as:
-//   (ext << sizeof(large)) + large
-// The maximum number of 1s in a bit vector is:
-//   2^40 (extended large block) + 2^8 (small block) = 1,099,511,628,032 ≈ 1 Gbits.
-// The extra bits are:
-//   (32 + 8 + 8*3) / 64*4 (payload) = 0.25 bits/bit
+// See src/sucvector.jl
 typedef struct block_s {
     uint64_t chunks[4];
     uint32_t large;

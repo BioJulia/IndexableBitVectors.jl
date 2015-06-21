@@ -4,7 +4,7 @@ export
     # types
     AbstractIndexableBitVector, AbstractBitVector,
     CompactBitVector, SucVector, CSucVector, RRR, RRRNP,
-    # operations
+    # query operations
     rank, rank0, rank1, select, select0, select1
 
 import Base: rank, select, show, size, push!, getindex, length, endof, sizeof, convert

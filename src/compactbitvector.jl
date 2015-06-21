@@ -1,6 +1,6 @@
-# compact bit vector
-# ------------------
-
+# CompactBitVector
+# ----------------
+#
 # Classical indexable bit vector implementation with 1/4 bits per bit additional
 # space.  Exactly speaking, this data structure is not succinct: n/4 (= Θ(n))
 # additional space is required rather than o(n).  But in practice, this is
@@ -58,9 +58,9 @@ end
 immutable LargeBlock end
 immutable SmallBlock end
 
-size(::Type{SmallBlock}) =  64
-size(::Type{LargeBlock}) = 256
-const n_smallblocks_per_largeblock = div(size(LargeBlock), size(SmallBlock))
+blocksizeof(::Type{SmallBlock}) =  64
+blocksizeof(::Type{LargeBlock}) = 256
+const n_smallblocks_per_largeblock = div(blocksizeof(LargeBlock), blocksizeof(SmallBlock))
 
 function push!(v::CompactBitVector, bit::Bool)
     len = length(v) + 1
@@ -68,14 +68,14 @@ function push!(v::CompactBitVector, bit::Bool)
         error("overflow")
     end
     ensureroom!(v, len)
-    if len % size(LargeBlock) == 1 && length(v.lbs) > 1
+    if len % blocksizeof(LargeBlock) == 1 && length(v.lbs) > 1
         # the first bit of a large block
         rank  = convert(Int, v.lbs[end-1])
         rank += v.sbs[end-1]
         rank += count_ones(v.bits.chunks[end])
         v.lbs[end] = rank & typemax(Uint32)
         v.sbs[end] = rank >> bitsof(Uint32)
-    elseif len % size(SmallBlock) == 1 && length(v.sbs) > 1
+    elseif len % blocksizeof(SmallBlock) == 1 && length(v.sbs) > 1
         # the first bit of a small block
         v.sbs[end] = v.sbs[end-1] + count_ones(v.bits.chunks[end])
     end
@@ -100,8 +100,8 @@ function unsafe_rank1(v::CompactBitVector, i::Integer)
     if i == 0
         return 0
     end
-    lbi = div(i - 1, size(LargeBlock)) + 1
-    sbi = div(i - 1, size(SmallBlock)) + 1
+    lbi = div(i - 1, blocksizeof(LargeBlock)) + 1
+    sbi = div(i - 1, blocksizeof(SmallBlock)) + 1
     @inbounds byte = v.bits.chunks[sbi]
     r = rem(i, 64)
     if r != 0
@@ -119,7 +119,7 @@ end
 # ensure room to store `len` bits
 function ensureroom!(v::CompactBitVector, len::Int)
     @assert len ≥ length(v)
-    n_required_sbs = div(len - 1, size(SmallBlock)) + 1
+    n_required_sbs = div(len - 1, blocksizeof(SmallBlock)) + 1
     if n_required_sbs ≤ length(v.sbs)
         # enough space to hold `len` bits
         return v

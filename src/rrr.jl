@@ -1,13 +1,19 @@
 # RRR
 # ---
 #
-# This file implements two variants of the original RRR:
-# RRR: RRR of Claude and Navarro (2008)
+# Indexable and compressible bit vectors. The compression is based on the
+# abandance of 1s (or 0s) in a block. If 1s or 0s are clustered in regions, RRR
+# can achieve high compression.  This file implements two variants of the RRR:
+# * RRR: RRR of Claude and Navarro (2008)
 #   - The block size is 15 bits and the original block is decoded from a universal table.
 # * RRRNP: RRR of Navarro and Providel (2012)
 #   - The block size is 63 bits and the original block is decoded on the fly.
-
-
+#
+# Data Layout
+# bits:      ..|...............|...............|... ...|...............|..
+# blocks:      |   block j+1   |   block j+2   |  ...  |  block j+ssr  |
+# superblocks: |                       superblock                      |
+#
 # TODO: formatting citations
 # Raman, R., Raman, V., & Satti, S. R. (2007).
 # Succinct Indexable Dictionaries with Applications to Encoding k-ary Trees, Prefix Sums and Multisets,
@@ -18,11 +24,6 @@
 # 080019(i), 176–187.
 #
 # Navarro, G., & Providel, E. (2012). Fast , Small , Simple Rank / Select on Bitmaps, (1).
-
-# Data Layout
-# bits:      ..|...............|...............|... ...|...............|..
-# blocks:      |   block j+1   |   block j+2   |  ...  |  block j+ssr  |
-# superblocks: |                       superblock                      |
 
 const superblock_sampling_rate = 16  # blocks per superblock
 
@@ -277,7 +278,7 @@ function jthblock(rrr::Union(RRR,RRRNP), j::Int)
 end
 
 # return left-aligned bits
-function read_bits(src::Union(BitVector,Vector), from::Int, len::Int)
+function read_bits(src, from, len)
     @assert 1 ≤ len ≤ 64
     bits = zero(Uint64)
     to = from + len - 1
