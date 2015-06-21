@@ -22,7 +22,7 @@ function SuccinctBitVector()
     return SuccinctBitVector(convert(BitVector, Bool[]), Uint32[], Uint8[])
 end
 
-function SuccinctBitVector(v::Union(BitVector,Vector))
+function SuccinctBitVector(v::Union(BitVector,Vector{Bool}))
     sv = SuccinctBitVector()
     for bit in v
         push!(sv, bit != 0)
@@ -30,8 +30,7 @@ function SuccinctBitVector(v::Union(BitVector,Vector))
     return sv
 end
 
-#function convert{T<:Integer}(::Type{SuccinctBitVector}, v::Union(BitVector,Vector{T}))
-function convert(::Type{SuccinctBitVector}, v::Union(BitVector,Vector))
+function convert(::Type{SuccinctBitVector}, v::Union(BitVector,Vector{Bool}))
     return SuccinctBitVector(v)
 end
 
@@ -75,10 +74,14 @@ endof(v::SuccinctBitVector)  = length(v.bits)
 
 getindex(v::SuccinctBitVector, i::Integer) = v.bits[i]
 
-function rank1(v::SuccinctBitVector, i::Int)
+function rank1(v::SuccinctBitVector, i::Integer)
     if !(0 ≤ i ≤ endof(v))
         throw(BoundsError())
     end
+    return unsafe_rank1(v, i)
+end
+
+function unsafe_rank1(v::SuccinctBitVector, i::Integer)
     if i == 0
         return 0
     end
@@ -89,9 +92,13 @@ function rank1(v::SuccinctBitVector, i::Int)
     if r != 0
         byte &= rmask(Uint64, r)
     end
-    @inbounds ret = convert(Int, v.sbs[sbi-rem(sbi, n_smallblocks_per_largeblock)+1]) << bitsof(Uint32)
-    @inbounds ret += v.lbs[lbi] + v.sbs[sbi] + count_ones(byte)
-    return convert(Int, ret)
+    @inbounds ret = (
+          convert(Int, v.sbs[sbi-rem(sbi, n_smallblocks_per_largeblock)+1]) << bitsof(Uint32)
+        + v.lbs[lbi]
+        + v.sbs[sbi]
+        + count_ones(byte)
+    )
+    return ret
 end
 
 # ensure room to store `len` bits

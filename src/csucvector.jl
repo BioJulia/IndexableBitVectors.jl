@@ -3,7 +3,7 @@ const libbitvector = "deps/libbitvector"
 type CSucVector <: AbstractIndexableBitVector
     ptr::Ptr{Void}
 
-    function CSucVector(src::Union(BitVector,Vector))
+    function CSucVector(src::Union(BitVector,Vector{Bool}))
         ptr = ccall((:make_sucvector, libbitvector), Ptr{Void}, ())
         vec = new(ptr)
         finalizer(vec, vec -> ccall((:delete_sucvector, libbitvector), Void, (Ptr{Void},), vec.ptr))
@@ -19,7 +19,7 @@ type CSucVector <: AbstractIndexableBitVector
     end
 end
 
-function convert(::Type{CSucVector}, v::Union(BitVector,Vector))
+function convert(::Type{CSucVector}, v::Union(BitVector,Vector{Bool}))
     return CSucVector(v)
 end
 
@@ -27,7 +27,7 @@ function length(v::CSucVector)
     ccall((:length, libbitvector), Int64, (Ptr{Void},), v.ptr)
 end
 
-function getindex(v::CSucVector, i::Int)
+function getindex(v::CSucVector, i::Integer)
     if !(1 ≤ i ≤ endof(v))
         throw(BoundsError())
     end

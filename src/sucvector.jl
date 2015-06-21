@@ -29,7 +29,7 @@ end
 
 SucVector() = SucVector(Block[], 0)
 
-function SucVector(src::Union(BitVector,Vector))
+function SucVector(src::Union(BitVector,Vector{Bool}))
     len = length(src)
     n_blocks = div(len, bits_per_block) + 1
     blocks = Array(Block, n_blocks)
@@ -44,7 +44,7 @@ function SucVector(src::Union(BitVector,Vector))
     return SucVector(blocks, len)
 end
 
-function read_chunk(src::Union(BitVector,Vector), from::Int)
+function read_chunk(src, from::Int)
     # read a 64-bit chunk from a bitvector
     chunk = zero(Uint64)
     for i in from:from+63
@@ -56,7 +56,7 @@ function read_chunk(src::Union(BitVector,Vector), from::Int)
     return chunk
 end
 
-function read_4chunks(src::Union(BitVector,Vector), from::Int)
+function read_4chunks(src, from::Int)
     # read four 64-bit chunks from a bitvector at once
     a = read_chunk(src, from)
     b = read_chunk(src, from + 64 * 1)
@@ -65,13 +65,13 @@ function read_4chunks(src::Union(BitVector,Vector), from::Int)
     (a, b, c, d)
 end
 
-function convert(::Type{SucVector}, v::Union(BitVector,Vector))
+function convert(::Type{SucVector}, v::Union(BitVector,Vector{Bool}))
     return SucVector(v)
 end
 
 Base.length(v::SucVector) = v.len
 
-function getindex(v::SucVector, i::Int)
+function getindex(v::SucVector, i::Integer)
     if !(1 ≤ i ≤ endof(v))
         throw(BoundsError())
     end
@@ -79,7 +79,7 @@ function getindex(v::SucVector, i::Int)
 end
 
 # unsafe means the behavior is undefined when accessing an illegal index
-function unsafe_getindex(v::SucVector, i::Int)
+function unsafe_getindex(v::SucVector, i::Integer)
     q, r = divrem(i - 1, bits_per_block)
     block = v.blocks[q+1]
     q, r = divrem(r, bits_per_chunk)
@@ -87,7 +87,7 @@ function unsafe_getindex(v::SucVector, i::Int)
     return bitat(chunk, r + 1)
 end
 
-function rank1(v::SucVector, i::Int)
+function rank1(v::SucVector, i::Integer)
     if !(0 ≤ i ≤ endof(v))
         throw(BoundsError())
     end

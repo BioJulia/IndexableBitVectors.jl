@@ -51,9 +51,9 @@ blocksizeof(::Type{RRR}) = 15
 empty_rs(::Type{RRR}) = Uint16[]
 
 RRR() = RRR(Uint8[], Uint8[], SuperBlock[], 0)
-RRR(src::Union(BitVector,Vector)) = make_rrr(RRR, src)
+RRR(src::Union(BitVector,Vector{Bool})) = make_rrr(RRR, src)
 
-function convert(::Type{RRR}, src::Union(BitVector,Vector))
+function convert(::Type{RRR}, src::Union(BitVector,Vector{Bool}))
     return RRR(src)
 end
 
@@ -114,9 +114,9 @@ empty_rs(::Type{RRRNP}) = Uint64[]
 #          |      .. ....       ......|
 
 RRRNP() = RRRNP(Uint8[], Uint64[], SuperBlock[], 0)
-RRRNP(src::Union(BitVector,Vector)) = make_rrr(RRRNP, src)
+RRRNP(src::Union(BitVector,Vector{Bool})) = make_rrr(RRRNP, src)
 
-function convert(::Type{RRRNP}, src::Union(BitVector,Vector))
+function convert(::Type{RRRNP}, src::Union(BitVector,Vector{Bool}))
     return RRRNP(src)
 end
 
