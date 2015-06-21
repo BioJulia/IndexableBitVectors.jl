@@ -47,65 +47,11 @@ type RRR <: AbstractIndexedBitVector
     len::Uint32
 end
 
-blocksizeof(rrr::Type{RRR}) = 15
+blocksizeof(::Type{RRR}) = 15
+empty_rs(::Type{RRR}) = Uint16[]
 
 RRR() = RRR(Uint8[], Uint8[], SuperBlock[], 0)
-
-function RRR(src::Union(BitVector,Vector))
-    len = length(src)
-    blocksize = blocksizeof(RRR)
-    n_blocks = div(len - 1, blocksize) + 1
-    ks = Uint8[]
-    rs = Uint16[]
-    superblocks = SuperBlock[]
-    rank = 0
-    n_rembits = 0  # the number of remaining bits in rs
-    for i in 1:n_blocks
-        # sample superblock
-        if i % superblock_sampling_rate == 1
-            superblock = SuperBlock(rank, length(rs) * 16 - n_rembits + 1)
-            push!(superblocks, superblock)
-        end
-
-        # bits, class and r-index
-        bits = packbits(src, (i - 1) * blocksize + 1, blocksize)
-        k = count_ones(bits)
-        r = bits2rindex(bits, blocksize, k)
-        @assert 0 ≤ k ≤ blocksize
-        @assert 0 ≤ r < Comb[blocksize,k]
-        rank += k
-
-        # store the class to ks
-        if isodd(i)
-            # use upper 4 bits: here----
-            push!(ks, k << 4)
-        else
-            # use lower 4 bits: ----here
-            ks[end] |= k
-        end
-
-        # store the r-index to rs
-        if isempty(rs)
-            push!(rs, 0x0000)
-            n_rembits += 16
-        end
-        # the number of bits required to store r-index
-        n_rbits = nbits(blocksize, k)
-        @assert n_rbits ≤ 16
-        if n_rembits ≥ n_rbits
-            # this r-index can be stored in the last element
-            rs[end] |= r << (n_rembits - n_rbits)
-        else
-            # this r-index spans the two last elements
-            rs[end] |= r >>> (n_rbits - n_rembits)
-            push!(rs, 0x0000)
-            rs[end] |= r << (16 - (n_rbits - n_rembits))
-            n_rembits += 16
-        end
-        n_rembits -= n_rbits
-    end
-    return RRR(ks, rs, superblocks, len)
-end
+RRR(src::Union(BitVector,Vector)) = make_rrr(RRR, src)
 
 function convert(::Type{RRR}, src::Union(BitVector,Vector))
     return RRR(src)
@@ -158,6 +104,7 @@ type RRRNP <: AbstractIndexedBitVector
 end
 
 blocksizeof(::Type{RRRNP}) = 63
+empty_rs(::Type{RRRNP}) = Uint64[]
 
 # 3 elements of ks store 4 classes
 # ks:      |........|........|........|  8bits for each
@@ -165,75 +112,7 @@ blocksizeof(::Type{RRRNP}) = 63
 #          |      .. ....       ......|
 
 RRRNP() = RRRNP(Uint8[], Uint64[], SuperBlock[], 0)
-
-function RRRNP(src::Union(BitVector,Vector))
-    len = length(src)
-    blocksize = blocksizeof(RRRNP)
-    n_blocks = div(len - 1, blocksize) + 1
-    ks = Uint8[]
-    rs = Uint64[]
-    superblocks = SuperBlock[]
-    n_el_bits = bitsof(eltype(rs))
-    rank = 0
-    n_rembits = 0
-    for i in 1:n_blocks
-        # sample superblock
-        if i % superblock_sampling_rate == 1
-            superblock = SuperBlock(rank, sizeof(rs) * 8 - n_rembits + 1)
-            push!(superblocks, superblock)
-        end
-
-        # bits, class and r-index
-        bits = packbits(src, (i - 1) * blocksize + 1, blocksize)
-        k = count_ones(bits)
-        r = bits2rindex(bits, blocksize, k)
-        @assert 0 ≤ k ≤ blocksize
-        @assert 0 ≤ r < Comb[blocksize,k]
-        rank += k
-
-        # store the class to ks
-        if i % 4 == 1
-            push!(ks, 0, 0, 0)
-        end
-        @switch i % 4 begin
-            @case 1
-                ks[end-2] |= k << 2
-                break
-            @case 2
-                ks[end-2] |= k >> 4
-                ks[end-1] |= k << 4
-                break
-            @case 3
-                ks[end-1] |= k >> 2
-                ks[end]   |= k << 6
-                break
-            @case 0
-                ks[end]   |= k
-                break
-        end
-
-        # store the r-index to rs
-        if isempty(rs)
-            push!(rs, 0)
-            n_rembits += n_el_bits
-        end
-        # the number of bits required to store r-index
-        n_rbits = nbits(blocksize, k)
-        @assert n_rbits ≤ n_el_bits
-        if n_rembits ≥ n_rbits
-            # this r-index can be stored in the last element
-            rs[end] |= r << (n_rembits - n_rbits)
-        else
-            # this r-index spans the two last elements
-            rs[end] |= r >>> (n_rbits - n_rembits)
-            push!(rs, 0)
-            rs[end] |= r << (n_el_bits - (n_rbits - n_rembits))
-            n_rembits += n_el_bits
-        end
-        n_rembits -= n_rbits
-    end
-    return RRRNP(ks, rs, superblocks, len)
-end
+RRRNP(src::Union(BitVector,Vector)) = make_rrr(RRRNP, src)
 
 function convert(::Type{RRRNP}, src::Union(BitVector,Vector))
     return RRRNP(src)
@@ -282,6 +161,86 @@ function classof(rrr::RRRNP, j::Int)
         k = rrr.ks[3ki+3] & rmask(Uint8, 6)
     end
     return k
+end
+
+function make_rrr{T<:Union(RRR,RRRNP)}(::Type{T}, src::Union(BitVector,Vector))
+    len = length(src)
+    blocksize = blocksizeof(T)
+    n_blocks = div(len - 1, blocksize) + 1
+    ks = Uint8[]
+    rs = empty_rs(T)
+    superblocks = SuperBlock[]
+    rs_el_bits = bitsof(eltype(rs))
+    rank = 0
+    n_rembits = 0  # the number of remaining bits in rs
+    for i in 1:n_blocks
+        # sample superblock
+        if i % superblock_sampling_rate == 1
+            push!(superblocks, SuperBlock(rank, sizeof(rs) * 8 - n_rembits + 1))
+        end
+
+        # bits, class and r-index
+        bits = packbits(src, (i - 1) * blocksize + 1, blocksize)
+        k = count_ones(bits)
+        r = bits2rindex(bits, blocksize, k)
+        @assert 0 ≤ k ≤ blocksize
+        @assert 0 ≤ r < Comb[blocksize,k]
+        rank += k
+
+        # store the class to ks
+        if T === RRR
+            if isodd(i)
+                # use upper 4 bits: here----
+                push!(ks, k << 4)
+            else
+                # use lower 4 bits: ----here
+                ks[end] |= k
+            end
+        elseif T === RRRNP
+            if i % 4 == 1
+                push!(ks, 0, 0, 0)
+            end
+            @switch i % 4 begin
+                @case 1
+                    ks[end-2] |= k << 2
+                    break
+                @case 2
+                    ks[end-2] |= k >> 4
+                    ks[end-1] |= k << 4
+                    break
+                @case 3
+                    ks[end-1] |= k >> 2
+                    ks[end]   |= k << 6
+                    break
+                @case 0
+                    ks[end]   |= k
+                    break
+            end
+        else
+            error()
+        end
+
+        # store the r-index to rs
+        if isempty(rs)
+            push!(rs, 0)
+            n_rembits += rs_el_bits
+        end
+        # the number of bits required to store r-index
+        n_rbits = nbits(blocksize, k)
+        @assert n_rbits ≤ rs_el_bits
+        if n_rembits ≥ n_rbits
+            # this r-index can be stored in the last element
+            rs[end] |= r << (n_rembits - n_rbits)
+        else
+            # this r-index spans the two last elements
+            rs[end] |= r >> (n_rbits - n_rembits)
+            push!(rs, 0)
+            rs[end] |= r << (rs_el_bits - (n_rbits - n_rembits))
+            n_rembits += rs_el_bits
+        end
+        n_rembits -= n_rbits
+    end
+    return T(ks, rs, superblocks, len)
 end
 
 # Compute the class and r-index of the j-th block, and
