@@ -39,6 +39,9 @@ function test_access{T}(::Type{T})
     bitv = rand(1024) .> 0.5
     b = convert(T, bitv)
     for i in 1:1024; @fact b[i] => bitv[i]; end
+
+    b = convert(T, rand(10) .> 0.5)
+    for i in 1:10; @fact typeof(b[i]) => Bool; end
 end
 
 function test_rank{T}(::Type{T})
@@ -96,6 +99,10 @@ function test_rank{T}(::Type{T})
     b = convert(T, bitv)
     for i in 1:1024; @fact rank0(b, i) => rank0(bitv, i); end
     for i in 1:1024; @fact rank1(b, i) => rank1(bitv, i); end
+
+    b = convert(T, rand(10) .> 0.5)
+    for i in 1:10; @fact typeof(rank0(b, i)) => Int; end
+    for i in 1:10; @fact typeof(rank1(b, i)) => Int; end
 end
 
 function test_select{T}(::Type{T})
@@ -143,6 +150,10 @@ function test_select{T}(::Type{T})
     b = convert(T, bitv)
     for i in 1:1024; @fact select0(b, i) => select0(bitv, i); end
     for i in 1:1024; @fact select1(b, i) => select1(bitv, i); end
+
+    b = convert(T, rand(10) .> 0.5)
+    for i in 1:10; @fact typeof(select0(b, i)) => Int; end
+    for i in 1:10; @fact typeof(select1(b, i)) => Int; end
 end
 
 

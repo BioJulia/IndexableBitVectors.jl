@@ -48,5 +48,5 @@ function rank1(v::CSucVector, i::Int)
 end
 
 function unsafe_rank1(v::CSucVector, i::Int)
-    ccall((:rank1, libbitvector), Uint64, (Ptr{Void}, Int64), v.ptr, i - 1)
+    ccall((:rank1, libbitvector), Int64, (Ptr{Void}, Int64), v.ptr, i - 1)
 end
