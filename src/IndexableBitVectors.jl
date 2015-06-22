@@ -7,11 +7,11 @@ export
     # query operations
     rank, rank0, rank1, select, select0, select1
 
-import Base: rank, select, show, size, push!, getindex, length, endof, sizeof, convert
+import Base: rank, select, push!, getindex, length, endof, sizeof, convert
 using Compat
 using Switch
 
-abstract AbstractIndexableBitVector <: DenseArray{Bool,1}
+abstract AbstractIndexableBitVector
 typealias AbstractBitVector Union(BitVector,AbstractIndexableBitVector)
 
 include("common.jl")

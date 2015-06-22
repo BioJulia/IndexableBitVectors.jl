@@ -49,12 +49,6 @@ function convert(::Type{CompactBitVector}, v::Union(BitVector,Vector{Bool}))
     return CompactBitVector(v)
 end
 
-function show(io::IO, v::CompactBitVector)
-    write(io, "CompactBitVector(bits=[...],")
-    write(io, "large_blocks=$(v.lbs),")
-    write(io, "small_blocks=$(v.sbs))")
-end
-
 immutable LargeBlock end
 immutable SmallBlock end
 
@@ -85,7 +79,6 @@ end
 push!(v::CompactBitVector, b::Integer) = push!(v::CompactBitVector, b != 0)
 
 length(v::CompactBitVector) = length(v.bits)
-endof(v::CompactBitVector)  = length(v.bits)
 
 getindex(v::CompactBitVector, i::Integer) = v.bits[i]
 

@@ -59,7 +59,6 @@ function convert(::Type{RRR}, src::Union(BitVector,Vector{Bool}))
 end
 
 length(rrr::RRR) = rrr.len
-endof(rrr::RRR) = rrr.len
 
 function getindex(rrr::RRR, i::Integer)
     if !(1 ≤ i ≤ endof(rrr))
