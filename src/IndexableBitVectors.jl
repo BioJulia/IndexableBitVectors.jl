@@ -24,7 +24,7 @@ using Switch
 abstract AbstractIndexableBitVector
 typealias AbstractBitVector Union(BitVector,AbstractIndexableBitVector)
 
-include("common.jl")
+include("utils.jl")
 include("bitvector.jl")
 include("compactbitvector.jl")
 include("sucvector.jl")
