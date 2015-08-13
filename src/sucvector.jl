@@ -37,13 +37,13 @@ end
 
 SucVector() = SucVector(Block[], 0)
 
-function SucVector(src::Union(BitVector,Vector{Bool}))
-    len = length(src)
+function convert(::Type{SucVector}, vec::Union(BitVector,Vector{Bool}))
+    len = length(vec)
     n_blocks = div(len, bits_per_block) + 1
     blocks = Array(Block, n_blocks)
     offset = 0
     for i in 1:n_blocks
-        chunks = read_4chunks(src, (i - 1) * bits_per_block + 1)
+        chunks = read_4chunks(vec, (i - 1) * bits_per_block + 1)
         blocks[i] = Block(chunks, offset)
         for j in 1:4
             offset += count_ones(chunks[j])
@@ -71,10 +71,6 @@ function read_4chunks(src, from::Int)
     c = read_chunk(src, from + 64 * 2)
     d = read_chunk(src, from + 64 * 3)
     (a, b, c, d)
-end
-
-function convert(::Type{SucVector}, v::Union(BitVector,Vector{Bool}))
-    return SucVector(v)
 end
 
 Base.length(v::SucVector) = v.len

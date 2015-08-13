@@ -31,23 +31,19 @@ type CompactBitVector <: AbstractIndexableBitVector
     sbs::Vector{Uint8}
 end
 
-maxlength(::Type{CompactBitVector}) = 2^40 - 1
-
 function CompactBitVector()
     return CompactBitVector(convert(BitVector, Bool[]), Uint32[], Uint8[])
 end
 
-function CompactBitVector(v::Union(BitVector,Vector{Bool}))
-    sv = CompactBitVector()
+function convert(::Type{CompactBitVector}, v::Union(BitVector,Vector{Bool}))
+    bv = CompactBitVector()
     for bit in v
-        push!(sv, bit != 0)
+        push!(bv, bit != 0)
     end
-    return sv
+    return bv
 end
 
-function convert(::Type{CompactBitVector}, v::Union(BitVector,Vector{Bool}))
-    return CompactBitVector(v)
-end
+maxlength(::Type{CompactBitVector}) = 2^40 - 1
 
 immutable LargeBlock end
 immutable SmallBlock end

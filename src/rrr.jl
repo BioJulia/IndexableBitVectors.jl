@@ -52,11 +52,7 @@ blocksizeof(::Type{RRR}) = 15
 empty_rs(::Type{RRR}) = Uint16[]
 
 RRR() = RRR(Uint8[], Uint8[], SuperBlock[], 0)
-RRR(src::Union(BitVector,Vector{Bool})) = make_rrr(RRR, src)
-
-function convert(::Type{RRR}, src::Union(BitVector,Vector{Bool}))
-    return RRR(src)
-end
+convert(::Type{RRR}, vec::Union(BitVector,Vector{Bool})) = make_rrr(RRR, vec)
 
 length(rrr::RRR) = rrr.len
 
@@ -114,11 +110,7 @@ empty_rs(::Type{LargeRRR}) = Uint64[]
 #          |      .. ....       ......|
 
 LargeRRR() = LargeRRR(Uint8[], Uint64[], SuperBlock[], 0)
-LargeRRR(src::Union(BitVector,Vector{Bool})) = make_rrr(LargeRRR, src)
-
-function convert(::Type{LargeRRR}, src::Union(BitVector,Vector{Bool}))
-    return LargeRRR(src)
-end
+convert(::Type{LargeRRR}, vec::Union(BitVector,Vector{Bool})) = make_rrr(LargeRRR, vec)
 
 length(rrr::LargeRRR) = rrr.len
 endof(rrr::LargeRRR) = rrr.len
