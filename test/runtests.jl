@@ -217,14 +217,14 @@ facts("RRR") do
     end
 end
 
-facts("RRRNP") do
+facts("LargeRRR") do
     context("access") do
-        test_access(RRRNP)
+        test_access(LargeRRR)
     end
     context("rank") do
-        test_rank(RRRNP)
+        test_rank(LargeRRR)
     end
     context("select") do
-        test_select(RRRNP)
+        test_select(LargeRRR)
     end
 end

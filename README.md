@@ -23,7 +23,7 @@ And other shortcuts:
 * `CompactBitVector`: rank values are precomputed in large and small blocks.
 * `SucVector`: similar to `CompactBitVector`, but the data layout is different.
 * `RRR`: compressible indexable bit vector.
-* `RRRNP`: similar to `RRR`, but compressed code is decoded on the fly.
+* `LargeRRR`: similar to `RRR`, but uses larger block and compressed code is decoded on the fly.
 
 ## Benchmarks:
 

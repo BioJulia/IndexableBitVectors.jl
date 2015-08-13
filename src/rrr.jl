@@ -6,7 +6,7 @@
 # can achieve high compression.  This file implements two variants of the RRR:
 # * RRR: RRR of Claude and Navarro (2008)
 #   - The block size is 15 bits and the original block is decoded from a universal table.
-# * RRRNP: RRR of Navarro and Providel (2012)
+# * LargeRRR: RRR of Navarro and Providel (2012)
 #   - The block size is 63 bits and the original block is decoded on the fly.
 #
 # Data Layout
@@ -98,47 +98,47 @@ end
 
 # RRR of Navarro and Providel
 # the block size is 63 and the block is decoded on the fly.
-type RRRNP <: AbstractIndexableBitVector
+type LargeRRR <: AbstractIndexableBitVector
     ks::Vector{Uint8}
     rs::Vector{Uint64}
     superblocks::Vector{SuperBlock}
     len::Int
 end
 
-blocksizeof(::Type{RRRNP}) = 63
-empty_rs(::Type{RRRNP}) = Uint64[]
+blocksizeof(::Type{LargeRRR}) = 63
+empty_rs(::Type{LargeRRR}) = Uint64[]
 
 # 3 elements of ks store 4 classes
 # ks:      |........|........|........|  8bits for each
 # classes: |......       .... ..      |  6bits for each
 #          |      .. ....       ......|
 
-RRRNP() = RRRNP(Uint8[], Uint64[], SuperBlock[], 0)
-RRRNP(src::Union(BitVector,Vector{Bool})) = make_rrr(RRRNP, src)
+LargeRRR() = LargeRRR(Uint8[], Uint64[], SuperBlock[], 0)
+LargeRRR(src::Union(BitVector,Vector{Bool})) = make_rrr(LargeRRR, src)
 
-function convert(::Type{RRRNP}, src::Union(BitVector,Vector{Bool}))
-    return RRRNP(src)
+function convert(::Type{LargeRRR}, src::Union(BitVector,Vector{Bool}))
+    return LargeRRR(src)
 end
 
-length(rrr::RRRNP) = rrr.len
-endof(rrr::RRRNP) = rrr.len
+length(rrr::LargeRRR) = rrr.len
+endof(rrr::LargeRRR) = rrr.len
 
-function getindex(rrr::RRRNP, i::Integer)
+function getindex(rrr::LargeRRR, i::Integer)
     if !(1 ≤ i ≤ endof(rrr))
         throw(BoundsError())
     end
-    blocksize = blocksizeof(RRRNP)
+    blocksize = blocksizeof(LargeRRR)
     j = div(i - 1, blocksize) + 1
     k, r, _ = jthblock(rrr, j)
     bits = rindex2bits(r, blocksize, convert(Int, k)) << (64 - blocksize)
     return bitat(Uint64, bits, rem(i - 1, blocksize) + 1)
 end
 
-function rank1(rrr::RRRNP, i::Integer)
+function rank1(rrr::LargeRRR, i::Integer)
     if !(0 ≤ i ≤ endof(rrr))
         throw(BoundsError())
     end
-    blocksize = blocksizeof(RRRNP)
+    blocksize = blocksizeof(LargeRRR)
     j, rem = divrem(i - 1, blocksize)
     k, r, rank = jthblock(rrr, j + 1)
     bits = rindex2bits(r, blocksize, convert(Int, k)) << (64 - blocksize)
@@ -146,7 +146,7 @@ function rank1(rrr::RRRNP, i::Integer)
     return convert(Int, rank)
 end
 
-function classof(rrr::RRRNP, j::Int)
+function classof(rrr::LargeRRR, j::Int)
     ki, rem = divrem(j - 1, 4)
     # NOTE: convert(Uint8, ...) is not needed in v0.4
     @inbounds @switch rem begin
@@ -170,7 +170,7 @@ function classof(rrr::RRRNP, j::Int)
     return k
 end
 
-function make_rrr{T<:Union(RRR,RRRNP)}(::Type{T}, src::Union(BitVector,Vector))
+function make_rrr{T<:Union(RRR,LargeRRR)}(::Type{T}, src::Union(BitVector,Vector))
     len = length(src)
     if len > typemax(Int)
         error("the bit vector is too large")
@@ -204,7 +204,7 @@ function make_rrr{T<:Union(RRR,RRRNP)}(::Type{T}, src::Union(BitVector,Vector))
                 # use lower 4 bits: ----here
                 ks[end] |= k
             end
-        elseif T === RRRNP
+        elseif T === LargeRRR
             if i % 4 == 1
                 push!(ks, 0, 0, 0)
             end
@@ -255,7 +255,7 @@ end
 
 # Compute the class and r-index of the j-th block, and
 # the rank value at the beginning of the j-th block
-function jthblock(rrr::Union(RRR,RRRNP), j::Int)
+function jthblock(rrr::Union(RRR,LargeRRR), j::Int)
     @assert 1 ≤ j
     i = div(j - 1, superblock_sampling_rate)
     superblock = rrr.superblocks[i+1]
@@ -389,9 +389,9 @@ end
     return c
 end
 
-@assert blocksizeof(RRR) ≤ blocksizeof(RRRNP)
+@assert blocksizeof(RRR) ≤ blocksizeof(LargeRRR)
 
-const Comb = CombinationTable([binomial(t, k) for t in 0:blocksizeof(RRRNP), k in 0:blocksizeof(RRRNP)])
+const Comb = CombinationTable([binomial(t, k) for t in 0:blocksizeof(LargeRRR), k in 0:blocksizeof(LargeRRR)])
 
 # enumeration of bit patterns for blocks, sorted by class and r-index
 const E, K = let
@@ -409,7 +409,7 @@ const E, K = let
 end
 
 # Lookup table to know the number of bits to encode class k's r-indices with blocksize t
-const NBitsTable = [t ≥ k ? ceil(Int, log2(Comb[t,k])) : 0 for t in 1:blocksizeof(RRRNP), k in 0:blocksizeof(RRRNP)]
+const NBitsTable = [t ≥ k ? ceil(Int, log2(Comb[t,k])) : 0 for t in 1:blocksizeof(LargeRRR), k in 0:blocksizeof(LargeRRR)]
 
 function nbits(t, k)
     return NBitsTable[t,k+1]

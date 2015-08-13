@@ -2,10 +2,20 @@ module IndexableBitVectors
 
 export
     # types
-    AbstractIndexableBitVector, AbstractBitVector,
-    CompactBitVector, SucVector, CSucVector, RRR, RRRNP,
+    AbstractBitVector,
+    AbstractIndexableBitVector,
+    CompactBitVector,
+    SucVector,
+    CSucVector,
+    RRR,
+    LargeRRR,
     # query operations
-    rank, rank0, rank1, select, select0, select1
+    rank,
+    rank0,
+    rank1,
+    select,
+    select0,
+    select1
 
 import Base: rank, select, push!, getindex, length, endof, sizeof, convert
 using Compat

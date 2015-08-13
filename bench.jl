@@ -54,7 +54,7 @@ let
             ord = ord[rand(1:length(ord), 10_000)]
         end
         println("length: $len bits = $(datasize(div(len, 8), style=:bin))")
-        for t in [CompactBitVector, SucVector, CSucVector, RRR, RRRNP]
+        for t in [CompactBitVector, SucVector, CSucVector, RRR, LargeRRR]
             size = bench(t, len, ord, r=r)
             println("sizeof(bitvector) = $(datasize(size, style=:bin))")
         end
