@@ -1,2 +1,5 @@
 *.jl.cov
 *.jl.mem
+*.dylib
+*.dylib.dSYM
+.ipynb_checkpoints
