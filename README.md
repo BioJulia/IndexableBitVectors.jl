@@ -2,8 +2,6 @@
 
 [![Build Status](https://travis-ci.org/bicycle1885/IndexableBitVectors.jl.svg?branch=master)](https://travis-ci.org/bicycle1885/IndexableBitVectors.jl)
 
-**This package is now alpha version.**
-
 This package exports following operations over bit vectors with extremely fast
 speed while keeping extra memory usage small:
 
@@ -27,9 +25,8 @@ And other shortcuts:
 
 ## Benchmarks:
 
-* [Dense (0.50)](benchmarks/dense.txt)
-* [Sparse (0.10)](benchmarks/sparse.txt)
-* [Very Sparse (0.01)](benchmarks/very-sparse.txt)
+The script and result of benchmarks can be found in the [benchmarks](./benchmarks)
+directory. Plots are in a Jupyter notebook: [Benchmarks/plot.ipynb](./benchmarks/plot.ipynb).
 
 Please note that the estimated space of `SucVector` and `CSucVector` is not
 accurate.
