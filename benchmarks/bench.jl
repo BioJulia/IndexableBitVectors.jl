@@ -52,8 +52,11 @@ let
         vec = rand(len) .< r
         bv = convert(T, vec)
         print(T, '\t', len, '\t', r, '\t')
+        gc()
         print(bench_getindex(bv, 5), '\t')
+        gc()
         print(bench_rank1(bv, 5), '\t')
+        gc()
         print(bench_select1(bv, 5), '\n')
     end
 end
