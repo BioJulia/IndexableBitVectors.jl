@@ -26,7 +26,7 @@ And other shortcuts:
 ## Benchmarks:
 
 The script and result of benchmarks can be found in the [benchmarks](./benchmarks)
-directory. Plots are in a Jupyter notebook: [Benchmarks/plot.ipynb](./benchmarks/plot.ipynb).
+directory. Plots are in a Jupyter notebook: [benchmarks/plot.ipynb](./benchmarks/plot.ipynb).
 
 Please note that the estimated space of `SucVector` and `CSucVector` is not
 accurate.
