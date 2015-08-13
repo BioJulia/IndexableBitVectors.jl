@@ -76,26 +76,24 @@ push!(v::CompactBitVector, b::Integer) = push!(v::CompactBitVector, b != 0)
 
 length(v::CompactBitVector) = length(v.bits)
 
-getindex(v::CompactBitVector, i::Integer) = v.bits[i]
+@inline getindex(v::CompactBitVector, i::Integer) = v.bits[i]
 
-function rank1(v::CompactBitVector, i::Integer)
-    if !(0 ≤ i ≤ endof(v))
+@inline function rank1(v::CompactBitVector, i::Integer)
+    if i < 0 || endof(v) < i
         throw(BoundsError())
     end
     return unsafe_rank1(v, i)
 end
 
-function unsafe_rank1(v::CompactBitVector, i::Integer)
+@inline function unsafe_rank1(v::CompactBitVector, i::Integer)
     if i == 0
         return 0
     end
     lbi = div(i - 1, blocksizeof(LargeBlock)) + 1
     sbi = div(i - 1, blocksizeof(SmallBlock)) + 1
     @inbounds byte = v.bits.chunks[sbi]
-    r = rem(i, 64)
-    if r != 0
-        byte &= rmask(Uint64, r)
-    end
+    r = mod64(i)
+    byte &= ifelse(r != 0, rmask(UInt64, r), ~UInt64(0))
     @inbounds ret = (
           convert(Int, v.sbs[sbi-rem(sbi, n_smallblocks_per_largeblock)+1]) << bitsof(Uint32)
         + v.lbs[lbi]

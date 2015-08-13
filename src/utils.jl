@@ -14,12 +14,14 @@ end
 endof(v::AbstractIndexableBitVector) = length(v)
 
 # return the i-th bit
-bitat(chunk::Uint64, i::Int) = (chunk >>> (64 - i)) & 0x01 == 0x01
-bitat{T<:Unsigned}(::Type{T}, chunk::T, i::Int) = (chunk >>> (sizeof(T) * 8 - i)) & 1 == 1
+@inline bitat(chunk::Uint64, i::Int) = (chunk >>> (64 - i)) & 0x01 == 0x01
+@inline bitat{T<:Unsigned}(::Type{T}, chunk::T, i::Int) = (chunk >>> (sizeof(T) * 8 - i)) & 1 == 1
 
 # assume 1 byte = 8 bits
-bitsof{T<:Unsigned}(::Type{T}) = sizeof(T) * 8
+@inline bitsof{T<:Unsigned}(::Type{T}) = sizeof(T) * 8
+
+@inline mod64(i) = i & 63
 
 # make a bit mask
-lmask{T<:Unsigned}(typ::Type{T}, n::Int) = typemax(typ) << (bitsof(typ) - n)
-rmask{T<:Unsigned}(typ::Type{T}, n::Int) = typemax(typ) >> (bitsof(typ) - n)
+@inline lmask{T<:Unsigned}(typ::Type{T}, n::Int) = typemax(typ) << (bitsof(typ) - n)
+@inline rmask{T<:Unsigned}(typ::Type{T}, n::Int) = typemax(typ) >> (bitsof(typ) - n)
