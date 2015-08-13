@@ -30,18 +30,18 @@ const superblock_sampling_rate = 16  # blocks per superblock
 # sampling rate controls the tradeoff between performance and space
 immutable SuperBlock
     # partial sum of rank values
-    rank::Uint64
+    rank::UInt64
     # offset of the starting position of r-index
-    offset::Uint64
+    offset::UInt64
 end
 
 type RRR <: AbstractIndexableBitVector
     # class values for each block
     # class values are encoded in 4 bits, hence `ks` is a packed array of 4-bit elements
-    ks::Vector{Uint8}
+    ks::Vector{UInt8}
     # r-indices (or offset) for each block
     # r-index is a variable-length encoding of position in a class. This array is also packed without delimiters.
-    rs::Vector{Uint16}
+    rs::Vector{UInt16}
     # sampled blocks
     superblocks::Vector{SuperBlock}
     # length of bits
@@ -49,9 +49,9 @@ type RRR <: AbstractIndexableBitVector
 end
 
 blocksizeof(::Type{RRR}) = 15
-empty_rs(::Type{RRR}) = Uint16[]
+empty_rs(::Type{RRR}) = UInt16[]
 
-RRR() = RRR(Uint8[], Uint8[], SuperBlock[], 0)
+RRR() = RRR(UInt8[], UInt8[], SuperBlock[], 0)
 convert(::Type{RRR}, vec::Union(BitVector,Vector{Bool})) = make_rrr(RRR, vec)
 
 length(rrr::RRR) = rrr.len
@@ -64,7 +64,7 @@ function getindex(rrr::RRR, i::Integer)
     j = div(i - 1, blocksize) + 1
     k, r, _ = jthblock(rrr, j)
     bits = E[K[k+1]+r+1] << (16 - blocksize)
-    return bitat(Uint16, bits, rem(i - 1, blocksize) + 1)
+    return bitat(UInt16, bits, rem(i - 1, blocksize) + 1)
 end
 
 function rank1(rrr::RRR, i::Integer)
@@ -75,7 +75,7 @@ function rank1(rrr::RRR, i::Integer)
     j, rem = divrem(i - 1, blocksize)
     k, r, rank = jthblock(rrr, j + 1)
     bits = E[K[k+1]+r+1] << (16 - blocksize)
-    rank += count_ones(bits & lmask(Uint16, rem + 1))
+    rank += count_ones(bits & lmask(UInt16, rem + 1))
     return convert(Int, rank)
 end
 
@@ -95,21 +95,21 @@ end
 # RRR of Navarro and Providel
 # the block size is 63 and the block is decoded on the fly.
 type LargeRRR <: AbstractIndexableBitVector
-    ks::Vector{Uint8}
-    rs::Vector{Uint64}
+    ks::Vector{UInt8}
+    rs::Vector{UInt64}
     superblocks::Vector{SuperBlock}
     len::Int
 end
 
 blocksizeof(::Type{LargeRRR}) = 63
-empty_rs(::Type{LargeRRR}) = Uint64[]
+empty_rs(::Type{LargeRRR}) = UInt64[]
 
 # 3 elements of ks store 4 classes
 # ks:      |........|........|........|  8bits for each
 # classes: |......       .... ..      |  6bits for each
 #          |      .. ....       ......|
 
-LargeRRR() = LargeRRR(Uint8[], Uint64[], SuperBlock[], 0)
+LargeRRR() = LargeRRR(UInt8[], UInt64[], SuperBlock[], 0)
 convert(::Type{LargeRRR}, vec::Union(BitVector,Vector{Bool})) = make_rrr(LargeRRR, vec)
 
 length(rrr::LargeRRR) = rrr.len
@@ -123,7 +123,7 @@ function getindex(rrr::LargeRRR, i::Integer)
     j = div(i - 1, blocksize) + 1
     k, r, _ = jthblock(rrr, j)
     bits = rindex2bits(r, blocksize, convert(Int, k)) << (64 - blocksize)
-    return bitat(Uint64, bits, rem(i - 1, blocksize) + 1)
+    return bitat(UInt64, bits, rem(i - 1, blocksize) + 1)
 end
 
 function rank1(rrr::LargeRRR, i::Integer)
@@ -134,29 +134,29 @@ function rank1(rrr::LargeRRR, i::Integer)
     j, rem = divrem(i - 1, blocksize)
     k, r, rank = jthblock(rrr, j + 1)
     bits = rindex2bits(r, blocksize, convert(Int, k)) << (64 - blocksize)
-    rank += count_ones(bits & lmask(Uint64, rem + 1))
+    rank += count_ones(bits & lmask(UInt64, rem + 1))
     return convert(Int, rank)
 end
 
 function classof(rrr::LargeRRR, j::Int)
     ki, rem = divrem(j - 1, 4)
-    # NOTE: convert(Uint8, ...) is not needed in v0.4
+    # NOTE: convert(UInt8, ...) is not needed in v0.4
     @inbounds @switch rem begin
         @case 0
             k = rrr.ks[3ki+1] >> 2
             break
         @case 1
-            k1 = (rmask(Uint8, 2) & rrr.ks[3ki+1]) << 4
+            k1 = (rmask(UInt8, 2) & rrr.ks[3ki+1]) << 4
             k2 = rrr.ks[3ki+2] >> 4
-            k = convert(Uint8, k1 + k2)
+            k = convert(UInt8, k1 + k2)
             break
         @case 2
-            k1 = (rmask(Uint8, 4) & rrr.ks[3ki+2]) << 2
+            k1 = (rmask(UInt8, 4) & rrr.ks[3ki+2]) << 2
             k2 = rrr.ks[3ki+3] >> 6
-            k = convert(Uint8, k1 + k2)
+            k = convert(UInt8, k1 + k2)
             break
         @default  # @case 3
-            k = rrr.ks[3ki+3] & rmask(Uint8, 6)
+            k = rrr.ks[3ki+3] & rmask(UInt8, 6)
             break
     end
     return k
@@ -169,7 +169,7 @@ function make_rrr{T<:Union(RRR,LargeRRR)}(::Type{T}, src::Union(BitVector,Vector
     end
     blocksize = blocksizeof(T)
     n_blocks = div(len - 1, blocksize) + 1
-    ks = Uint8[]
+    ks = UInt8[]
     rs = empty_rs(T)
     superblocks = SuperBlock[]
     rs_el_bits = bitsof(eltype(rs))
@@ -271,7 +271,7 @@ end
 # return left-aligned bits
 function read_bits(src, from, len)
     @assert 1 ≤ len ≤ 64
-    bits = zero(Uint64)
+    bits = zero(UInt64)
     to = from + len - 1
     for i in from:min(to, endof(src))
         bits <<= 1
@@ -291,7 +291,7 @@ function read_rindex{T<:Unsigned}(rs::Vector{T}, offset::Int, len::Int)
     w = bitsof(T)
     ri, rem = divrem(offset - 1, w)
     if w - rem ≥ len
-        # stored in an element (T = Uint16, w = 16)
+        # stored in an element (T = UInt16, w = 16)
         # |      ri+1      |      ri+2      |
         # |................|................|
         # |    xxxxxx      |                |
@@ -301,7 +301,7 @@ function read_rindex{T<:Unsigned}(rs::Vector{T}, offset::Int, len::Int)
         @inbounds r = rs[ri+1] & rmask(T, w - rem)
         r >>= w - (rem + len)
     else
-        # spans two elements (T = Uint16, w = 16)
+        # spans two elements (T = UInt16, w = 16)
         # |      ri+1      |      ri+2      |
         # |................|................|
         # |          xxxxxx|xxxx            |
@@ -334,7 +334,7 @@ end
 # Inverse transformation of bits2rindex (encoding).
 # `bits` should be filled from the least significant bit.
 # For example, 0b00...001 is the first bits of the class k=1.
-function bits2rindex(bits::Uint64, t::Int, k::Integer)
+function bits2rindex(bits::UInt64, t::Int, k::Integer)
     @assert count_ones(bits) == k
     @assert 0 ≤ k ≤ t ≤ 64
     r = 0
@@ -354,7 +354,7 @@ end
 function rindex2bits(r::Int, t::Int, k::Integer)
     @assert 0 ≤ r < Comb[t,k]
     @assert 0 ≤ k ≤ t ≤ 64
-    bits = zero(Uint64)
+    bits = zero(UInt64)
     @inbounds while r > 0
         c = Comb[t-1,k]
         if r ≥ c
@@ -365,7 +365,7 @@ function rindex2bits(r::Int, t::Int, k::Integer)
         end
         t -= 1
     end
-    bits |= typemax(Uint64) >>> (64 - k)
+    bits |= typemax(UInt64) >>> (64 - k)
     return bits
 end
 
@@ -388,7 +388,7 @@ const Comb = CombinationTable([binomial(t, k) for t in 0:blocksizeof(LargeRRR), 
 # enumeration of bit patterns for blocks, sorted by class and r-index
 const E, K = let
     t = blocksizeof(RRR) + 1
-    bitss = Uint16[]
+    bitss = UInt16[]
     offsets = Int[]
     for k in 0:t
         push!(offsets, length(bitss))

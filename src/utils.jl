@@ -14,7 +14,7 @@ end
 endof(v::AbstractIndexableBitVector) = length(v)
 
 # return the i-th bit
-@inline bitat(chunk::Uint64, i::Int) = (chunk >>> (64 - i)) & 0x01 == 0x01
+@inline bitat(chunk::UInt64, i::Int) = (chunk >>> (64 - i)) & 0x01 == 0x01
 @inline bitat{T<:Unsigned}(::Type{T}, chunk::T, i::Int) = (chunk >>> (sizeof(T) * 8 - i)) & 1 == 1
 
 # assume 1 byte = 8 bits

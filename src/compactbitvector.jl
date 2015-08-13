@@ -26,13 +26,13 @@ type CompactBitVector <: AbstractIndexableBitVector
     # data
     bits::BitVector
     # large blocks
-    lbs::Vector{Uint32}
+    lbs::Vector{UInt32}
     # small blocks
-    sbs::Vector{Uint8}
+    sbs::Vector{UInt8}
 end
 
 function CompactBitVector()
-    return CompactBitVector(convert(BitVector, Bool[]), Uint32[], Uint8[])
+    return CompactBitVector(convert(BitVector, Bool[]), UInt32[], UInt8[])
 end
 
 function convert(::Type{CompactBitVector}, v::Union(BitVector,Vector{Bool}))
@@ -63,8 +63,8 @@ function push!(v::CompactBitVector, bit::Bool)
         rank  = convert(Int, v.lbs[end-1])
         rank += v.sbs[end-1]
         rank += count_ones(v.bits.chunks[end])
-        v.lbs[end] = rank & typemax(Uint32)
-        v.sbs[end] = rank >> bitsof(Uint32)
+        v.lbs[end] = rank & typemax(UInt32)
+        v.sbs[end] = rank >> bitsof(UInt32)
     elseif len % blocksizeof(SmallBlock) == 1 && length(v.sbs) > 1
         # the first bit of a small block
         v.sbs[end] = v.sbs[end-1] + count_ones(v.bits.chunks[end])
@@ -95,7 +95,7 @@ end
     r = mod64(i)
     byte &= ifelse(r != 0, rmask(UInt64, r), ~UInt64(0))
     @inbounds ret = (
-          convert(Int, v.sbs[sbi-rem(sbi, n_smallblocks_per_largeblock)+1]) << bitsof(Uint32)
+          convert(Int, v.sbs[sbi-rem(sbi, n_smallblocks_per_largeblock)+1]) << bitsof(UInt32)
         + v.lbs[lbi]
         + v.sbs[sbi]
         + count_ones(byte)

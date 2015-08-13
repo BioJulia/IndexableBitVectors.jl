@@ -13,7 +13,7 @@ type CSucVector <: AbstractIndexableBitVector
         ptr = ccall((:make_sucvector, libbitvector), Ptr{Void}, ())
         vec = new(ptr)
         finalizer(vec, vec -> ccall((:delete_sucvector, libbitvector), Void, (Ptr{Void},), vec.ptr))
-        chunks = Uint64[]
+        chunks = UInt64[]
         i = 1
         while i ≤ endof(src)
             chunk = IndexableBitVectors.read_chunk(src, i)

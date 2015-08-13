@@ -3,30 +3,30 @@
 #
 # Almost the same as CompactBitVector, but the layout of data is different.
 # Four chunks of bits are stored in a block and blocks are stored in a vector.
-# As a result, all data are interleaved and thus the CPU cache may be used
+# As a result, all data are Interleaved and thus the CPU cache may be used
 # efficiently.  The idea is taken from:
 # https://github.com/herumi/cybozulib/blob/master/include/cybozu/sucvector.hpp
 # Note that in v0.3 the blocks will not be packed in a vector.
 
 immutable Block
     # bit chunks (64bits × 4 = 256bits)
-    chunks::NTuple{4,Uint64}
+    chunks::NTuple{4,UInt64}
     # large block
-    large::Uint32
+    large::UInt32
     # 8-bit extension of the large block (32 + 8 = 40 bits in total)
-    ext::Uint8
+    ext::UInt8
     # small blocks
-    smalls::NTuple{3,Uint8}
+    smalls::NTuple{3,UInt8}
 end
 
 const bits_per_chunk =  64
 const bits_per_block = 256
 
-function Block(chunks::NTuple{4,Uint64}, offset::Int)
+function Block(chunks::NTuple{4,UInt64}, offset::Int)
     @assert offset ≤ 2^40 - 1
-    a =     convert(Uint8, count_ones(chunks[1]))
-    b = a + convert(Uint8, count_ones(chunks[2]))
-    c = b + convert(Uint8, count_ones(chunks[3]))
+    a =     convert(UInt8, count_ones(chunks[1]))
+    b = a + convert(UInt8, count_ones(chunks[2]))
+    c = b + convert(UInt8, count_ones(chunks[3]))
     Block(chunks, offset, offset >>> 32, (a, b, c))
 end
 
@@ -54,7 +54,7 @@ end
 
 function read_chunk(src, from::Int)
     # read a 64-bit chunk from a bitvector
-    chunk = zero(Uint64)
+    chunk = zero(UInt64)
     for i in from:from+63
         chunk <<= 1
         if i ≤ endof(src)
@@ -110,6 +110,6 @@ end
     end
     # remaining bits
     @inbounds chunk = block.chunks[q+1]
-    ret += count_ones(chunk & lmask(Uint64, r + 1))
+    ret += count_ones(chunk & lmask(UInt64, r + 1))
     return ret
 end
