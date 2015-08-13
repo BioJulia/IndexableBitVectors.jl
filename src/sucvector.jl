@@ -75,32 +75,32 @@ end
 
 Base.length(v::SucVector) = v.len
 
-function getindex(v::SucVector, i::Integer)
+@inline function getindex(v::SucVector, i::Integer)
     if !(1 ≤ i ≤ endof(v))
         throw(BoundsError())
     end
     return unsafe_getindex(v, i)
 end
 
-function unsafe_getindex(v::SucVector, i::Integer)
+@inline function unsafe_getindex(v::SucVector, i::Integer)
     q, r = divrem(i - 1, bits_per_block)
-    block = v.blocks[q+1]
+    @inbounds block = v.blocks[q+1]
     q, r = divrem(r, bits_per_chunk)
-    chunk = block.chunks[q+1]
+    @inbounds chunk = block.chunks[q+1]
     return bitat(chunk, r + 1)
 end
 
-function rank1(v::SucVector, i::Integer)
+@inline function rank1(v::SucVector, i::Integer)
     if !(0 ≤ i ≤ endof(v))
         throw(BoundsError())
     end
     return unsafe_rank1(v, i)
 end
 
-function unsafe_rank1(v::SucVector, i::Integer)
+@inline function unsafe_rank1(v::SucVector, i::Integer)
     q, r = divrem(i - 1, bits_per_block)
-    @inbounds block = v.blocks[q+1]
     ret = 0
+    @inbounds block = v.blocks[q+1]
     # large block
     ret += block.ext << 32 + convert(Int64, block.large)
     # small block
