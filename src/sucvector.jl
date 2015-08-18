@@ -49,7 +49,7 @@ SucVector() = SucVector(Block[], 0)
 
 function convert(::Type{SucVector}, vec::Union(BitVector,Vector{Bool}))
     len = length(vec)
-    n_blocks = div(len, bits_per_block) + 1
+    n_blocks = cld(len, bits_per_block)
     blocks = Vector{Block}(n_blocks)
     offset = 0
     for i in 1:n_blocks
@@ -63,19 +63,17 @@ function convert(::Type{SucVector}, vec::Union(BitVector,Vector{Bool}))
 end
 
 function read_chunk(src, from::Int)
-    # read a 64-bit chunk from a bitvector
-    chunk = zero(UInt64)
+    chunk = UInt64(0)
     for i in from:from+63
-        chunk <<= 1
-        if i ≤ endof(src)
-            chunk += src[i] ≠ 0
+        chunk >>= 1
+        if i ≤ endof(src) && src[i]
+            chunk |= UInt64(1) << 63
         end
     end
     return chunk
 end
 
-function read_4chunks(src, from::Int)
-    # read four 64-bit chunks from a bitvector at once
+function read_4chunks(src::Vector{Bool}, from::Int)
     a = read_chunk(src, from)
     b = read_chunk(src, from + 64 * 1)
     c = read_chunk(src, from + 64 * 2)
@@ -83,7 +81,24 @@ function read_4chunks(src, from::Int)
     (a, b, c, d)
 end
 
-Base.length(v::SucVector) = v.len
+function read_4chunks(src::BitVector, from::Int)
+    @assert rem(from, bits_per_block) == 1
+    if length(src) >= from + bits_per_block - 1
+        i = div(from - 1, 64) + 1
+        a = src.chunks[i]
+        b = src.chunks[i+1]
+        c = src.chunks[i+2]
+        d = src.chunks[i+3]
+    else
+        a = read_chunk(src, from)
+        b = read_chunk(src, from + 64 * 1)
+        c = read_chunk(src, from + 64 * 2)
+        d = read_chunk(src, from + 64 * 3)
+    end
+    return a, b, c, d
+end
+
+length(v::SucVector) = v.len
 
 @inline function getindex(v::SucVector, i::Integer)
     if !(1 ≤ i ≤ endof(v))
@@ -97,7 +112,7 @@ end
     @inbounds block = v.blocks[q]
     q, r = chunk_id(r)
     @inbounds chunk = block.chunks[q]
-    return bitat(chunk, r)
+    return (chunk >> (r - 1)) & 1 == 1
 end
 
 @inline function rank1(v::SucVector, i::Integer)
@@ -122,6 +137,6 @@ end
         # remaining bits
         chunk = block.chunks[q]
     end
-    ret += count_ones(chunk & lmask(UInt64, r))
+    ret += count_ones(chunk & rmask(UInt64, r))
     return ret
 end

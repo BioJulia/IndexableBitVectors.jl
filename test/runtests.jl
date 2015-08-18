@@ -193,6 +193,7 @@ facts("SucVector") do
     end
 end
 
+#=
 facts("CSucVector") do
     context("access") do
         test_access(SucVector)
@@ -204,6 +205,7 @@ facts("CSucVector") do
         test_select(SucVector)
     end
 end
+=#
 
 facts("RRR") do
     context("access") do
