@@ -9,14 +9,14 @@
 # Note that in v0.3 the blocks will not be packed in a vector.
 
 immutable Block
-    # bit chunks (64bits × 4 = 256bits)
-    chunks::NTuple{4,UInt64}
     # large block
     large::UInt32
-    # 8-bit extension of the large block (32 + 8 = 40 bits in total)
-    ext::UInt8
     # small blocks
-    smalls::NTuple{3,UInt8}
+    #   the first small block is used for 8-bit extension of the large block
+    #   hence, 40 (= 32 + 8) bits are available in total
+    smalls::NTuple{4,UInt8}
+    # bit chunks (64bits × 4 = 256bits)
+    chunks::NTuple{4,UInt64}
 end
 
 const bits_per_chunk =  64
@@ -27,7 +27,17 @@ function Block(chunks::NTuple{4,UInt64}, offset::Int)
     a =     convert(UInt8, count_ones(chunks[1]))
     b = a + convert(UInt8, count_ones(chunks[2]))
     c = b + convert(UInt8, count_ones(chunks[3]))
-    Block(chunks, offset, offset >>> 32, (a, b, c))
+    Block(offset, (offset >>> 32, a, b, c), chunks)
+end
+
+@inline function block_id(i)
+    j = Int(i - 1)
+    (j >>> 8) + 1, (j & 0b11111111) + 1
+end
+
+@inline function chunk_id(i)
+    j = Int(i - 1)
+    (j >>> 6) + 1, (j & 0b00111111) + 1
 end
 
 type SucVector <: AbstractIndexableBitVector
@@ -40,7 +50,7 @@ SucVector() = SucVector(Block[], 0)
 function convert(::Type{SucVector}, vec::Union(BitVector,Vector{Bool}))
     len = length(vec)
     n_blocks = div(len, bits_per_block) + 1
-    blocks = Array(Block, n_blocks)
+    blocks = Vector{Block}(n_blocks)
     offset = 0
     for i in 1:n_blocks
         chunks = read_4chunks(vec, (i - 1) * bits_per_block + 1)
@@ -83,33 +93,35 @@ Base.length(v::SucVector) = v.len
 end
 
 @inline function unsafe_getindex(v::SucVector, i::Integer)
-    q, r = divrem(i - 1, bits_per_block)
-    @inbounds block = v.blocks[q+1]
-    q, r = divrem(r, bits_per_chunk)
-    @inbounds chunk = block.chunks[q+1]
-    return bitat(chunk, r + 1)
+    q, r = block_id(i)
+    @inbounds block = v.blocks[q]
+    q, r = chunk_id(r)
+    @inbounds chunk = block.chunks[q]
+    return bitat(chunk, r)
 end
 
 @inline function rank1(v::SucVector, i::Integer)
-    if !(0 ≤ i ≤ endof(v))
+    if i < 0 || i > endof(v)
         throw(BoundsError())
     end
     return unsafe_rank1(v, i)
 end
 
 @inline function unsafe_rank1(v::SucVector, i::Integer)
-    q, r = divrem(i - 1, bits_per_block)
-    ret = 0
-    @inbounds block = v.blocks[q+1]
-    # large block
-    ret += block.ext << 32 + convert(Int64, block.large)
-    # small block
-    q, r = divrem(r, bits_per_chunk)
-    if q > 0
-        @inbounds ret += block.smalls[q]
+    if i == 0
+        return 0
     end
-    # remaining bits
-    @inbounds chunk = block.chunks[q+1]
-    ret += count_ones(chunk & lmask(UInt64, r + 1))
+    q, r = block_id(i)
+    @inbounds begin
+        block = v.blocks[q]
+        # large block
+        ret = Int(block.large) + Int(block.smalls[1]) << 32
+        # small block
+        q, r = chunk_id(r)
+        ret += ifelse(q == 1, 0x00, block.smalls[q])
+        # remaining bits
+        chunk = block.chunks[q]
+    end
+    ret += count_ones(chunk & lmask(UInt64, r))
     return ret
 end
