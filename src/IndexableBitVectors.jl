@@ -1,3 +1,5 @@
+isdefined(Base, :__precompile__) && __precompile__()
+
 module IndexableBitVectors
 
 export
@@ -6,7 +8,7 @@ export
     AbstractIndexableBitVector,
     CompactBitVector,
     SucVector,
-    CSucVector,
+    #CSucVector,
     RRR,
     LargeRRR,
     # query operations
@@ -17,7 +19,16 @@ export
     select0,
     select1
 
-import Base: rank, select, push!, getindex, length, endof, sizeof, convert
+import Base:
+    rank,
+    select,
+    push!,
+    getindex,
+    length,
+    endof,
+    sizeof,
+    convert
+
 using Compat
 using Switch
 
