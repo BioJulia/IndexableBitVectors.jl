@@ -6,11 +6,8 @@ export
     # types
     AbstractBitVector,
     AbstractIndexableBitVector,
-    CompactBitVector,
     SucVector,
-    #CSucVector,
     RRR,
-    LargeRRR,
     # query operations
     rank,
     rank0,

@@ -169,18 +169,6 @@ facts("BitVector") do
     end
 end
 
-facts("CompactBitVector") do
-    context("access") do
-        test_access(CompactBitVector)
-    end
-    context("rank") do
-        test_rank(CompactBitVector)
-    end
-    context("select") do
-        test_select(CompactBitVector)
-    end
-end
-
 facts("SucVector") do
     context("access") do
         test_access(SucVector)
@@ -190,6 +178,18 @@ facts("SucVector") do
     end
     context("select") do
         test_select(SucVector)
+    end
+end
+
+facts("CompactBitVector") do
+    context("access") do
+        test_access(IndexableBitVectors.CompactBitVector)
+    end
+    context("rank") do
+        test_rank(IndexableBitVectors.CompactBitVector)
+    end
+    context("select") do
+        test_select(IndexableBitVectors.CompactBitVector)
     end
 end
 
@@ -221,12 +221,12 @@ end
 
 facts("LargeRRR") do
     context("access") do
-        test_access(LargeRRR)
+        test_access(IndexableBitVectors.LargeRRR)
     end
     context("rank") do
-        test_rank(LargeRRR)
+        test_rank(IndexableBitVectors.LargeRRR)
     end
     context("select") do
-        test_select(LargeRRR)
+        test_select(IndexableBitVectors.LargeRRR)
     end
 end
