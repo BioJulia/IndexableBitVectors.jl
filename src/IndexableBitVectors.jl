@@ -32,7 +32,7 @@ import Base:
 using Compat
 using Switch
 
-abstract AbstractIndexableBitVector
+abstract AbstractIndexableBitVector <: AbstractVector{Bool}
 typealias AbstractBitVector Union(BitVector,AbstractIndexableBitVector)
 
 include("utils.jl")
