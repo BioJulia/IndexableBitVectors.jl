@@ -2,11 +2,11 @@
 # ---------
 #
 # Almost the same as CompactBitVector, but the layout of data is different.
-# Four chunks of bits are stored in a block and blocks are stored in a vector.
-# As a result, all data are Interleaved and thus the CPU cache may be used
+# Four chunks of 64 bits are stored in a block and blocks are stored in a vector.
+# As a result, all data are interleaved and thus the CPU cache may be used
 # efficiently.  The idea is taken from:
 # https://github.com/herumi/cybozulib/blob/master/include/cybozu/sucvector.hpp
-# Note that in v0.3 the blocks will not be packed in a vector.
+# Note that in v0.3 blocks will not be packed in a vector.
 
 immutable Block
     # large block
@@ -23,7 +23,6 @@ const bits_per_chunk =  64
 const bits_per_block = 256
 
 function Block(chunks::NTuple{4,UInt64}, offset::Int)
-    @assert offset ≤ 2^40 - 1
     a =     convert(UInt8, count_ones(chunks[1]))
     b = a + convert(UInt8, count_ones(chunks[2]))
     c = b + convert(UInt8, count_ones(chunks[3]))
@@ -40,6 +39,20 @@ end
     (j >>> 6) + 1, (j & 0b00111111) + 1
 end
 
+"""
+Static indexable bit vector.
+
+`SucVector` requires 5/4 bits per bit in order to keep bits and the number of bits
+(i.e. a `SucVector` object becomes ~25% bigger when converted from a `BitVector` object).
+Bits are split into blocks: four chunks of 64 bits are stored in a block and blocks are stored in a vector.
+Blocks are contiguous in momery so that memory cache works efficiently.
+
+Let `n` be the length of a `SucVector`, the asymptotic query times are
+
+* getindex: `O(1)`
+* rank: `O(1)`
+* select: `O(log n)`
+"""
 type SucVector <: AbstractIndexableBitVector
     blocks::Vector{Block}
     len::Int
@@ -47,8 +60,9 @@ end
 
 SucVector() = SucVector(Block[], 0)
 
-function convert(::Type{SucVector}, vec::Union(BitVector,Vector{Bool}))
+function convert(::Type{SucVector}, vec::AbstractVector{Bool})
     len = length(vec)
+    @assert len ≤ 2^40
     n_blocks = cld(len, bits_per_block)
     blocks = Vector{Block}(n_blocks)
     offset = 0
@@ -63,8 +77,10 @@ function convert(::Type{SucVector}, vec::Union(BitVector,Vector{Bool}))
 end
 
 function read_chunk(src, from::Int)
+    @assert bits_per_chunk == sizeof(UInt64) * 8
     chunk = UInt64(0)
-    for i in from:from+63
+    for k in 0:bits_per_chunk-1
+        i = from + k
         chunk >>= 1
         if i ≤ endof(src) && src[i]
             chunk |= UInt64(1) << 63
@@ -75,25 +91,27 @@ end
 
 function read_4chunks(src::Vector{Bool}, from::Int)
     a = read_chunk(src, from)
-    b = read_chunk(src, from + 64 * 1)
-    c = read_chunk(src, from + 64 * 2)
-    d = read_chunk(src, from + 64 * 3)
-    (a, b, c, d)
+    b = read_chunk(src, from + bits_per_chunk * 1)
+    c = read_chunk(src, from + bits_per_chunk * 2)
+    d = read_chunk(src, from + bits_per_chunk * 3)
+    return a, b, c, d
 end
 
 function read_4chunks(src::BitVector, from::Int)
     @assert rem(from, bits_per_block) == 1
+    # NOTE: this method depends on the internal data layout of BitVector
+    # (but much faster).
     if length(src) >= from + bits_per_block - 1
-        i = div(from - 1, 64) + 1
+        i = div(from - 1, bits_per_chunk) + 1
         a = src.chunks[i]
         b = src.chunks[i+1]
         c = src.chunks[i+2]
         d = src.chunks[i+3]
     else
         a = read_chunk(src, from)
-        b = read_chunk(src, from + 64 * 1)
-        c = read_chunk(src, from + 64 * 2)
-        d = read_chunk(src, from + 64 * 3)
+        b = read_chunk(src, from + bits_per_chunk * 1)
+        c = read_chunk(src, from + bits_per_chunk * 2)
+        d = read_chunk(src, from + bits_per_chunk * 3)
     end
     return a, b, c, d
 end
@@ -115,20 +133,20 @@ end
     return (chunk >> (r - 1)) & 1 == 1
 end
 
-@inline function rank1(v::SucVector, i::Integer)
-    if i < 0 || i > endof(v)
+@inline function rank1(bv::SucVector, i::Integer)
+    if i < 0 || i > endof(bv)
         throw(BoundsError())
     end
-    return unsafe_rank1(v, i)
+    return unsafe_rank1(bv, i)
 end
 
-@inline function unsafe_rank1(v::SucVector, i::Integer)
+@inline function unsafe_rank1(bv::SucVector, i::Integer)
     if i == 0
         return 0
     end
     q, r = block_id(i)
     @inbounds begin
-        block = v.blocks[q]
+        block = bv.blocks[q]
         # large block
         ret = Int(block.large) + Int(block.smalls[1]) << 32
         # small block

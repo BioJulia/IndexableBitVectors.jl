@@ -1,7 +1,5 @@
-# Required method
-# * rank1(bv, i)     - the number of 1s' occurrences within bv[1:i]
-
-# the following methods are derived from the rank1 method
+# The following methods can be derived from the rank1 method.
+#   * rank1(bv, i)     - the number of 1s' occurrences within bv[1:i]
 
 function getindex(b::AbstractIndexableBitVector, i::Integer)
     return rank1(b, i) != rank1(b, i - 1)

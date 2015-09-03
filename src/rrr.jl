@@ -35,6 +35,21 @@ immutable SuperBlock
     offset::UInt64
 end
 
+"""
+Compressed indexable bit vector.
+
+`RRR` compresses a bit vector in an information-theoretically optimal representation.
+This compression is based on local abundance of bits; if 0s or 1s are clustered in a
+bit vector, it will be compressed even when the numbers of 0s and 1s are globally equal.
+
+Let `n` be the length of a `RRR`, the asymptotic query times are
+
+* getindex: `O(1)`
+* rank: `O(1)`
+* select: `O(log n)`
+
+See (Raman et al, 2007, doi:10.1145/1290672.1290680) for more details.
+"""
 type RRR <: AbstractIndexableBitVector
     # class values for each block
     # class values are encoded in 4 bits, hence `ks` is a packed array of 4-bit elements
@@ -52,7 +67,7 @@ blocksizeof(::Type{RRR}) = 15
 empty_rs(::Type{RRR}) = UInt16[]
 
 RRR() = RRR(UInt8[], UInt8[], SuperBlock[], 0)
-convert(::Type{RRR}, vec::Union(BitVector,Vector{Bool})) = make_rrr(RRR, vec)
+convert(::Type{RRR}, vec::AbstractVector{Bool}) = make_rrr(RRR, vec)
 
 length(rrr::RRR) = rrr.len
 
@@ -113,7 +128,6 @@ LargeRRR() = LargeRRR(UInt8[], UInt64[], SuperBlock[], 0)
 convert(::Type{LargeRRR}, vec::Union(BitVector,Vector{Bool})) = make_rrr(LargeRRR, vec)
 
 length(rrr::LargeRRR) = rrr.len
-endof(rrr::LargeRRR) = rrr.len
 
 function getindex(rrr::LargeRRR, i::Integer)
     if !(1 ≤ i ≤ endof(rrr))
