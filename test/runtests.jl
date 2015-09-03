@@ -206,20 +206,6 @@ facts("CompactBitVector") do
     end
 end
 
-#=
-facts("CSucVector") do
-    context("access") do
-        test_access(SucVector)
-    end
-    context("rank") do
-        test_rank(CSucVector)
-    end
-    context("select") do
-        test_select(SucVector)
-    end
-end
-=#
-
 facts("RRR") do
     context("access") do
         test_access(RRR)
