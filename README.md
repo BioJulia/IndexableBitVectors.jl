@@ -16,17 +16,14 @@ And other shortcuts:
 * `select0(bv, i)` = `select(0, bv, i)`
 * `select1(bv, i)` = `select(1, bv, i)`
 
-`AbstractIndexableBitVector`s:
+The following two types are exported:
 
-* `CompactBitVector`: rank values are precomputed in large and small blocks.
-* `SucVector`: similar to `CompactBitVector`, but the data layout is different.
+* `SucVector`: rank values are precomputed in blocks.
 * `RRR`: compressible indexable bit vector.
-* `LargeRRR`: similar to `RRR`, but uses larger block and compressed code is decoded on the fly.
+
+In general, queries on `SucVector` is faster than those on `RRR`, but `RRR` is compressible.
 
 ## Benchmarks:
 
 The script and result of benchmarks can be found in the [benchmarks](./benchmarks)
 directory. Plots are in a Jupyter notebook: [benchmarks/plot.ipynb](./benchmarks/plot.ipynb).
-
-Please note that the estimated space of `SucVector` and `CSucVector` is not
-accurate.
