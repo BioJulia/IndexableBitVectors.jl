@@ -156,6 +156,16 @@ function test_select{T}(::Type{T})
     for i in 1:10; @fact typeof(select1(b, i)) --> Int; end
 end
 
+function test_long{T}(::Type{T})
+    len = 2^33
+    b  = bitrand(len)
+    b′ = T(b)
+    for i in [1, 2, 2^32-1, 2^32, 2^32+1, len-1, len]
+        @fact b′[i] --> b[i]
+        @fact rank1(b′, i) --> rank1(b, i)
+    end
+end
+
 
 facts("BitVector") do
     context("access") do
@@ -178,6 +188,9 @@ facts("SucVector") do
     end
     context("select") do
         test_select(SucVector)
+    end
+    context("long") do
+        test_long(SucVector)
     end
 end
 
