@@ -89,7 +89,7 @@ function read_chunk(src, from::Int)
     return chunk
 end
 
-function read_4chunks(src::Vector{Bool}, from::Int)
+function read_4chunks(src::AbstractVector{Bool}, from::Int)
     a = read_chunk(src, from)
     b = read_chunk(src, from + bits_per_chunk * 1)
     c = read_chunk(src, from + bits_per_chunk * 2)
