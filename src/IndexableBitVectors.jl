@@ -36,7 +36,6 @@ include("utils.jl")
 include("bitvector.jl")
 include("compactbitvector.jl")
 include("sucvector.jl")
-include("csucvector.jl")
 include("rrr.jl")
 include("derived.jl")
 
