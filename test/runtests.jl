@@ -162,7 +162,7 @@ function test_long{T}(::Type{T})
     b′ = T(b)
     for i in [1, 2, 2^32-1, 2^32, 2^32+1, len-1, len]
         @fact b′[i] --> b[i]
-        @fact rank1(b′, i) --> rank1(b, i)
+        @fact rank1(b′, i) --> sum(b[1:i])
     end
 end
 
