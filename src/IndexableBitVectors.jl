@@ -26,7 +26,6 @@ import Base:
     sizeof,
     convert
 
-using Compat
 using Switch
 
 abstract AbstractIndexableBitVector <: AbstractVector{Bool}
