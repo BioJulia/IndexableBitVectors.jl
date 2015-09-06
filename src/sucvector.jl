@@ -26,7 +26,7 @@ function Block(chunks::NTuple{4,UInt64}, offset::Int)
     a =     convert(UInt8, count_ones(chunks[1]))
     b = a + convert(UInt8, count_ones(chunks[2]))
     c = b + convert(UInt8, count_ones(chunks[3]))
-    Block(offset, (offset >>> 32, a, b, c), chunks)
+    Block(offset & ~UInt32(0), (offset >>> 32, a, b, c), chunks)
 end
 
 @inline function block_id(i)

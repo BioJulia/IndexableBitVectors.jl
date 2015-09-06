@@ -157,8 +157,11 @@ function test_select{T}(::Type{T})
 end
 
 function test_long{T}(::Type{T})
-    len = 2^33
+    len = 2^33 + 1000
     b  = bitrand(len)
+    while sum(b) ≤ typemax(UInt32)
+        b  = bitrand(len)
+    end
     b′ = T(b)
     for i in [1, 2, 2^32-1, 2^32, 2^32+1, len-1, len]
         @fact b′[i] --> b[i]
