@@ -47,6 +47,8 @@ Static indexable bit vector.
 Bits are split into blocks: four chunks of 64 bits are stored in a block and blocks are stored in a vector.
 Blocks are contiguous in momery so that memory cache works efficiently.
 
+The number of bits is limited up to 2^40 bits. This is 128GiB so would be enough in most cases.
+
 Let `n` be the length of a `SucVector`, the asymptotic query times are
 
 * getindex: `O(1)`
