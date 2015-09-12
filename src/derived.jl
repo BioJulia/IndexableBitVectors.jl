@@ -6,7 +6,7 @@ function getindex(b::AbstractIndexableBitVector, i::Integer)
 end
 
 function rank0(b::AbstractBitVector, i::Integer)
-    return i - rank1(b, i)
+    return clamp(i, 0, length(b)) - rank1(b, i)
 end
 
 function rank(x::Integer, b::AbstractBitVector, i::Integer)
@@ -24,7 +24,7 @@ end
 function select(x::Integer, b::AbstractBitVector, i::Integer)
     lo = 0
     hi = endof(b)
-    if i == 0 || rank(x, b, hi) < i
+    if i ≤ 0 || rank(x, b, hi) < i
         return 0
     end
     # binary search
@@ -33,9 +33,10 @@ function select(x::Integer, b::AbstractBitVector, i::Integer)
         if rank(x, b, mi) >= i
             hi = mi
         else
-            # rank(mi) < i
             lo = mi + 1
         end
     end
     return lo
 end
+
+size(b::AbstractIndexableBitVector) = (length(b),)

@@ -121,9 +121,7 @@ end
 length(v::SucVector) = v.len
 
 @inline function getindex(v::SucVector, i::Integer)
-    if !(1 ≤ i ≤ endof(v))
-        throw(BoundsError())
-    end
+    checkbounds(v, i)
     return unsafe_getindex(v, i)
 end
 
@@ -135,14 +133,8 @@ end
     return (chunk >> (r - 1)) & 1 == 1
 end
 
-@inline function rank1(bv::SucVector, i::Integer)
-    if i < 0 || i > endof(bv)
-        throw(BoundsError())
-    end
-    return unsafe_rank1(bv, i)
-end
-
-@inline function unsafe_rank1(bv::SucVector, i::Integer)
+@inline function rank1(bv::SucVector, i::Int)
+    i = clamp(i, 0, bv.len)
     if i == 0
         return 0
     end
@@ -160,3 +152,5 @@ end
     ret += count_ones(chunk & rmask(UInt64, r))
     return ret
 end
+
+@inline rank1(bv::SucVector, i::Integer) = rank1(bv, Int(i))

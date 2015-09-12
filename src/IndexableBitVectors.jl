@@ -24,7 +24,8 @@ import Base:
     length,
     endof,
     sizeof,
-    convert
+    convert,
+    size
 
 using Switch
 
@@ -43,14 +44,14 @@ include("derived.jl")
 """
     rank0(rb, i)
 
-Count the number of 0s within `bv[1:i]`.
+Count the number of 0s (`false`s) within `bv[1:i]`.
 """
 rank0
 
 """
     rank1(bv, i)
 
-Count the number of 1s within `bv[1:i]`.
+Count the number of 1s (`true`s) within `bv[1:i]`.
 """
 rank1
 

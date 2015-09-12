@@ -47,25 +47,25 @@ end
 function test_rank{T}(::Type{T})
     b = convert(T, Bool[])
     @fact rank0(b, 0) --> 0
-    @fact_throws rank0(b, 1)
+    @fact rank0(b, 1) --> 0
     @fact rank1(b, 0) --> 0
-    @fact_throws rank1(b, 1)
+    @fact rank1(b, 1) --> 0
 
     b = convert(T, [false])
     @fact rank0(b, 0) --> 0
     @fact rank0(b, 1) --> 1
-    @fact_throws rank0(b, 2)
+    @fact rank0(b, 2) --> 1
     @fact rank1(b, 0) --> 0
     @fact rank1(b, 1) --> 0
-    @fact_throws rank1(b, 2)
+    @fact rank1(b, 2) --> 0
 
     b = convert(T, [true])
     @fact rank0(b, 0) --> 0
     @fact rank0(b, 1) --> 0
-    @fact_throws rank0(b, 2)
+    @fact rank0(b, 2) --> 0
     @fact rank1(b, 0) --> 0
     @fact rank1(b, 1) --> 1
-    @fact_throws rank1(b, 2)
+    @fact rank1(b, 2) --> 1
 
     b = convert(T, [false, false, true, true])
     # rank0
@@ -76,7 +76,7 @@ function test_rank{T}(::Type{T})
     @fact rank0(b, 4) --> 2
     @fact rank(0, b, 0) --> 0
     @fact rank(0, b, 4) --> 2
-    @fact_throws rank(0, b, 5) "out of bound"
+    @fact rank(0, b, 5) --> 2
     # rank1
     @fact rank1(b, 0) --> 0
     @fact rank1(b, 1) --> 0
@@ -85,7 +85,7 @@ function test_rank{T}(::Type{T})
     @fact rank1(b, 4) --> 2
     @fact rank(1, b, 0) --> 0
     @fact rank(1, b, 4) --> 2
-    @fact_throws rank(1, b, 5) "out of bound"
+    @fact rank(1, b, 5) --> 2
 
     b = convert(T, trues(1024))
     for i in 1:1024; @fact rank0(b, i) --> 0; end
@@ -107,44 +107,56 @@ end
 
 function test_select{T}(::Type{T})
     b = convert(T, Bool[])
+    @fact select0(b, -1) --> 0
     @fact select0(b, 0) --> 0
+    @fact select0(b, 1) --> 0
+    @fact select1(b, -1) --> 0
     @fact select1(b, 0) --> 0
+    @fact select1(b, 1) --> 0
 
     b = convert(T, [false])
+    @fact select0(b, -1) --> 0
     @fact select0(b, 0) --> 0
     @fact select0(b, 1) --> 1
     @fact select0(b, 2) --> 0
+    @fact select1(b, -1) --> 0
     @fact select1(b, 0) --> 0
     @fact select1(b, 1) --> 0
     @fact select1(b, 2) --> 0
 
     b = convert(T, [true])
+    @fact select0(b, -1) --> 0
     @fact select0(b, 0) --> 0
     @fact select0(b, 1) --> 0
     @fact select0(b, 2) --> 0
+    @fact select1(b, -1) --> 0
     @fact select1(b, 0) --> 0
     @fact select1(b, 1) --> 1
     @fact select1(b, 2) --> 0
 
     b = convert(T, [false, false, true, true])
     # select0
+    @fact select0(b, -1) --> 0
     @fact select0(b, 0) --> 0
     @fact select0(b, 1) --> 1
     @fact select0(b, 2) --> 2
     @fact select0(b, 3) --> 0
     # select1
+    @fact select1(b, -1) --> 0
     @fact select1(b, 0) --> 0
     @fact select1(b, 1) --> 3
     @fact select1(b, 2) --> 4
     @fact select1(b, 3) --> 0
 
     b = convert(T, trues(1024))
-    for i in 1:1024; @fact select0(b, i) --> 0; end
-    for i in 1:1024; @fact select1(b, i) --> i; end
+    for i in 0:1025; @fact select0(b, i) --> 0; end
+    for i in 0:1024; @fact select1(b, i) --> i; end
+    @fact select1(b, 1025) --> 0
 
     b = convert(T, falses(1024))
-    for i in 1:1024; @fact select0(b, i) --> i; end
-    for i in 1:1024; @fact select1(b, i) --> 0; end
+    for i in 0:1024; @fact select0(b, i) --> i; end
+    @fact select0(b, 1025) --> 0
+    for i in 0:1025; @fact select1(b, i) --> 0; end
 
     bitv = rand(1024) .> 0.5
     b = convert(T, bitv)
@@ -197,6 +209,7 @@ facts("SucVector") do
     end
 end
 
+#=
 facts("CompactBitVector") do
     context("access") do
         test_access(IndexableBitVectors.CompactBitVector)
@@ -208,6 +221,7 @@ facts("CompactBitVector") do
         test_select(IndexableBitVectors.CompactBitVector)
     end
 end
+=#
 
 facts("RRR") do
     context("access") do

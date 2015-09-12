@@ -72,9 +72,7 @@ convert(::Type{RRR}, vec::AbstractVector{Bool}) = make_rrr(RRR, vec)
 length(rrr::RRR) = rrr.len
 
 function getindex(rrr::RRR, i::Integer)
-    if !(1 ≤ i ≤ endof(rrr))
-        throw(BoundsError())
-    end
+    checkbounds(rrr, i)
     blocksize = blocksizeof(RRR)
     j = div(i - 1, blocksize) + 1
     k, r, _ = jthblock(rrr, j)
@@ -82,9 +80,10 @@ function getindex(rrr::RRR, i::Integer)
     return bitat(UInt16, bits, rem(i - 1, blocksize) + 1)
 end
 
-function rank1(rrr::RRR, i::Integer)
-    if !(0 ≤ i ≤ endof(rrr))
-        throw(BoundsError())
+function rank1(rrr::RRR, i::Int)
+    i = clamp(i, 0, rrr.len)
+    if i == 0
+        return 0
     end
     blocksize = blocksizeof(RRR)
     j, rem = divrem(i - 1, blocksize)
@@ -93,6 +92,8 @@ function rank1(rrr::RRR, i::Integer)
     rank += count_ones(bits & lmask(UInt16, rem + 1))
     return convert(Int, rank)
 end
+
+rank1(rrr::RRR, i::Integer) = rank1(rrr, Int(i))
 
 # return the class of j-th block
 @inline function classof(rrr::RRR, j::Int)
@@ -130,9 +131,7 @@ convert(::Type{LargeRRR}, vec::Union(BitVector,Vector{Bool})) = make_rrr(LargeRR
 length(rrr::LargeRRR) = rrr.len
 
 function getindex(rrr::LargeRRR, i::Integer)
-    if !(1 ≤ i ≤ endof(rrr))
-        throw(BoundsError())
-    end
+    checkbounds(rrr, i)
     blocksize = blocksizeof(LargeRRR)
     j = div(i - 1, blocksize) + 1
     k, r, _ = jthblock(rrr, j)
@@ -141,8 +140,9 @@ function getindex(rrr::LargeRRR, i::Integer)
 end
 
 function rank1(rrr::LargeRRR, i::Integer)
-    if !(0 ≤ i ≤ endof(rrr))
-        throw(BoundsError())
+    i = clamp(i, 0, rrr.len)
+    if i == 0
+        return 0
     end
     blocksize = blocksizeof(LargeRRR)
     j, rem = divrem(i - 1, blocksize)
