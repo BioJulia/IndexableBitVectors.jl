@@ -1,8 +1,7 @@
 # IndexableBitVectors
 
 [![Build Status](https://travis-ci.org/BioJulia/IndexableBitVectors.jl.svg?branch=master)](https://travis-ci.org/BioJulia/IndexableBitVectors.jl)
-[![IndexableBitVectors.jl](http://pkg.julialang.org/badges/IndexableBitVectors.jl_0.3.svg)](http://pkg.julialang.org/?pkg=IndexableBitVectors.jl&ver=0.3)
-[![IndexableBitVectors.jl](http://pkg.julialang.org/badges/IndexableBitVectors.jl_0.4.svg)](http://pkg.julialang.org/?pkg=IndexableBitVectors.jl&ver=0.4)
+[![IndexableBitVectors.jl](http://pkg.julialang.org/badges/IndexableBitVectors_0.4.svg)](http://pkg.julialang.org/?pkg=IndexableBitVectors&ver=0.4)
 
 This package exports following operations over bit vectors with extremely fast
 speed while keeping extra memory usage small:
