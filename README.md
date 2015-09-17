@@ -24,6 +24,39 @@ The following two types are exported:
 
 In general, queries on `SucVector` is faster than those on `RRR`, but `RRR` is compressible.
 
+Conversions from bit vectors are defined for these types. So you just pass a bit vector to them:
+
+```
+julia> using IndexableBitVectors
+
+julia> SucVector(bitrand(10))
+10-element IndexableBitVectors.SucVector:
+ false
+ false
+ false
+ false
+  true
+  true
+ false
+ false
+ false
+  true
+
+julia> RRR(bitrand(10))
+10-element IndexableBitVectors.RRR:
+ false
+ false
+ false
+ false
+  true
+ false
+ false
+ false
+  true
+ false
+
+```
+
 ## Benchmarks:
 
 The script and result of benchmarks can be found in the [benchmarks](./benchmarks)
