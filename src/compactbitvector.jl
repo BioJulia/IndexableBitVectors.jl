@@ -35,7 +35,7 @@ function CompactBitVector()
     return CompactBitVector(convert(BitVector, Bool[]), UInt32[], UInt8[])
 end
 
-function convert(::Type{CompactBitVector}, v::Union(BitVector,Vector{Bool}))
+function convert(::Type{CompactBitVector}, v::Union{BitVector,Vector{Bool}})
     bv = CompactBitVector()
     for bit in v
         push!(bv, bit != 0)

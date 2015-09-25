@@ -30,7 +30,7 @@ import Base:
 using Switch
 
 abstract AbstractIndexableBitVector <: AbstractVector{Bool}
-typealias AbstractBitVector Union(BitVector,AbstractIndexableBitVector)
+typealias AbstractBitVector Union{BitVector,AbstractIndexableBitVector}
 
 include("utils.jl")
 include("bitvector.jl")

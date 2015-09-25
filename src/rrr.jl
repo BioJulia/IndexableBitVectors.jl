@@ -126,7 +126,7 @@ empty_rs(::Type{LargeRRR}) = UInt64[]
 #          |      .. ....       ......|
 
 LargeRRR() = LargeRRR(UInt8[], UInt64[], SuperBlock[], 0)
-convert(::Type{LargeRRR}, vec::Union(BitVector,Vector{Bool})) = make_rrr(LargeRRR, vec)
+convert(::Type{LargeRRR}, vec::Union{BitVector,Vector{Bool}}) = make_rrr(LargeRRR, vec)
 
 length(rrr::LargeRRR) = rrr.len
 
@@ -176,7 +176,7 @@ function classof(rrr::LargeRRR, j::Int)
     return k
 end
 
-function make_rrr{T<:Union(RRR,LargeRRR)}(::Type{T}, src::Union(BitVector,Vector))
+function make_rrr{T<:Union{RRR,LargeRRR}}(::Type{T}, src::Union{BitVector,Vector})
     len = length(src)
     if len > typemax(Int)
         error("the bit vector is too large")
@@ -261,7 +261,7 @@ end
 
 # Compute the class and r-index of the j-th block, and
 # the rank value at the beginning of the j-th block
-function jthblock(rrr::Union(RRR,LargeRRR), j::Int)
+function jthblock(rrr::Union{RRR,LargeRRR}, j::Int)
     @assert 1 ≤ j
     i = div(j - 1, superblock_sampling_rate)
     superblock = rrr.superblocks[i+1]
