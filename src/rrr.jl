@@ -71,6 +71,9 @@ convert(::Type{RRR}, vec::AbstractVector{Bool}) = make_rrr(RRR, vec)
 
 length(rrr::RRR) = rrr.len
 
+# data size of payload in bytes
+sizeof(rrr::RRR) = sizeof(rrr.ks) + sizeof(rrr.rs) + sizeof(rrr.superblocks)
+
 function getindex(rrr::RRR, i::Integer)
     checkbounds(rrr, i)
     blocksize = blocksizeof(RRR)

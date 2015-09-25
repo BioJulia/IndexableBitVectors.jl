@@ -246,3 +246,16 @@ facts("LargeRRR") do
         test_select(IndexableBitVectors.LargeRRR)
     end
 end
+
+facts("sizeof") do
+    context("compressible") do
+        bv = falses(10_000)
+        @fact sizeof(RRR(bv)) < sizeof(bv) < sizeof(SucVector(bv)) --> true
+        bv = trues(10_000)
+        @fact sizeof(RRR(bv)) < sizeof(bv) < sizeof(SucVector(bv)) --> true
+    end
+    context("incompressible") do
+        bv = bitrand(10_000)
+        @fact sizeof(bv) < sizeof(SucVector(bv)) < sizeof(RRR(bv)) --> true
+    end
+end

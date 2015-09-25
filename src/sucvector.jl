@@ -62,6 +62,9 @@ end
 
 SucVector() = SucVector(Block[], 0)
 
+# data size of payload in bytes
+sizeof(bv::SucVector) = sizeof(bv.blocks)
+
 function convert(::Type{SucVector}, vec::AbstractVector{Bool})
     len = length(vec)
     @assert len ≤ 2^40

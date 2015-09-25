@@ -17,15 +17,15 @@ export
     select1
 
 import Base:
-    rank,
-    select,
-    push!,
+    convert,
+    endof,
     getindex,
     length,
-    endof,
-    sizeof,
-    convert,
-    size
+    push!,
+    rank,
+    select,
+    size,
+    sizeof
 
 using Switch
 
