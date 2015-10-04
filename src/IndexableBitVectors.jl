@@ -14,7 +14,10 @@ export
     rank1,
     select,
     select0,
-    select1
+    select1,
+    search,
+    search0,
+    search1
 
 import Base:
     convert,
@@ -23,6 +26,7 @@ import Base:
     length,
     push!,
     rank,
+    search,
     select,
     size,
     sizeof
@@ -40,6 +44,10 @@ include("rrr.jl")
 include("derived.jl")
 
 # help
+
+# By convention, variable `i` is used to represent the index (or position) of a
+# bit vector and `j` is used to represent the count (or cardinality) of a bit
+# vector.
 
 """
     rank0(rb, i)
@@ -82,5 +90,26 @@ select1
 Return the position of the `j`-th occurrence of `x` in `bv`.
 """
 select
+
+"""
+    search(x, bv, i)
+
+Search the position of the next `x` in `bv` starting from `i`.
+"""
+search
+
+"""
+    search0(bv, i)
+
+Search the position of the next 0 in `bv` starting from `i`.
+"""
+search0
+
+"""
+    search1(bv, i)
+
+Search the position of the next 1 in `bv` starting from `i`.
+"""
+search1
 
 end # module

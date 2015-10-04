@@ -8,14 +8,14 @@ function test_access{T}(::Type{T})
     @fact_throws b[0]
     @fact_throws b[1]
 
-    b = convert(T, [true])
-    @fact_throws b[0]
-    @fact b[1] --> 1
-    @fact_throws b[2]
-
     b = convert(T, [false])
     @fact_throws b[0]
     @fact b[1] --> 0
+    @fact_throws b[2]
+
+    b = convert(T, [true])
+    @fact_throws b[0]
+    @fact b[1] --> 1
     @fact_throws b[2]
 
     b = convert(T, [false, false, true, true])
@@ -26,15 +26,15 @@ function test_access{T}(::Type{T})
     @fact b[4] --> 1
     @fact_throws b[5]
 
-    b = convert(T, trues(1024))
-    @fact b[1] --> true
-    @fact b[end] --> true
-    @fact all([b[i] for i in 1:1024]) --> true
-
     b = convert(T, falses(1024))
     @fact b[1] --> false
     @fact b[end] --> false
     @fact all([b[i] for i in 1:1024]) --> false
+
+    b = convert(T, trues(1024))
+    @fact b[1] --> true
+    @fact b[end] --> true
+    @fact all([b[i] for i in 1:1024]) --> true
 
     bitv = rand(1024) .> 0.5
     b = convert(T, bitv)
@@ -87,13 +87,13 @@ function test_rank{T}(::Type{T})
     @fact rank(1, b, 4) --> 2
     @fact rank(1, b, 5) --> 2
 
-    b = convert(T, trues(1024))
-    for i in 1:1024; @fact rank0(b, i) --> 0; end
-    for i in 1:1024; @fact rank1(b, i) --> i; end
-
     b = convert(T, falses(1024))
     for i in 1:1024; @fact rank0(b, i) --> i; end
     for i in 1:1024; @fact rank1(b, i) --> 0; end
+
+    b = convert(T, trues(1024))
+    for i in 1:1024; @fact rank0(b, i) --> 0; end
+    for i in 1:1024; @fact rank1(b, i) --> i; end
 
     bitv = rand(1024) .> 0.5
     b = convert(T, bitv)
@@ -101,8 +101,8 @@ function test_rank{T}(::Type{T})
     for i in 1:1024; @fact rank1(b, i) --> rank1(bitv, i); end
 
     b = convert(T, rand(10) .> 0.5)
-    for i in 1:10; @fact typeof(rank0(b, i)) --> Int; end
-    for i in 1:10; @fact typeof(rank1(b, i)) --> Int; end
+    for i in 0:11; @fact typeof(rank0(b, i)) --> Int; end
+    for i in 0:11; @fact typeof(rank1(b, i)) --> Int; end
 end
 
 function test_select{T}(::Type{T})
@@ -148,15 +148,15 @@ function test_select{T}(::Type{T})
     @fact select1(b, 2) --> 4
     @fact select1(b, 3) --> 0
 
-    b = convert(T, trues(1024))
-    for i in 0:1025; @fact select0(b, i) --> 0; end
-    for i in 0:1024; @fact select1(b, i) --> i; end
-    @fact select1(b, 1025) --> 0
-
     b = convert(T, falses(1024))
     for i in 0:1024; @fact select0(b, i) --> i; end
     @fact select0(b, 1025) --> 0
     for i in 0:1025; @fact select1(b, i) --> 0; end
+
+    b = convert(T, trues(1024))
+    for i in 0:1025; @fact select0(b, i) --> 0; end
+    for i in 0:1024; @fact select1(b, i) --> i; end
+    @fact select1(b, 1025) --> 0
 
     bitv = rand(1024) .> 0.5
     b = convert(T, bitv)
@@ -164,8 +164,71 @@ function test_select{T}(::Type{T})
     for i in 1:1024; @fact select1(b, i) --> select1(bitv, i); end
 
     b = convert(T, rand(10) .> 0.5)
-    for i in 1:10; @fact typeof(select0(b, i)) --> Int; end
-    for i in 1:10; @fact typeof(select1(b, i)) --> Int; end
+    for i in 0:11; @fact typeof(select0(b, i)) --> Int; end
+    for i in 0:11; @fact typeof(select1(b, i)) --> Int; end
+end
+
+function test_search{T}(::Type{T})
+    b = convert(T, Bool[])
+    @fact search0(b, 0) --> 0
+    @fact search0(b, 1) --> 0
+    @fact search1(b, 0) --> 0
+    @fact search1(b, 1) --> 0
+
+    b = convert(T, [false])
+    @fact search0(b, 0) --> 1
+    @fact search0(b, 1) --> 1
+    @fact search0(b, 2) --> 0
+    @fact search1(b, 0) --> 0
+    @fact search1(b, 1) --> 0
+    @fact search1(b, 2) --> 0
+
+    b = convert(T, [true])
+    @fact search0(b, 0) --> 0
+    @fact search0(b, 1) --> 0
+    @fact search0(b, 2) --> 0
+    @fact search1(b, 0) --> 1
+    @fact search1(b, 1) --> 1
+    @fact search1(b, 2) --> 0
+
+    b = convert(T, [false, false, true, true])
+    # search0
+    @fact search0(b, 0) --> 1
+    @fact search0(b, 1) --> 1
+    @fact search0(b, 2) --> 2
+    @fact search0(b, 3) --> 0
+    @fact search0(b, 4) --> 0
+    # search1
+    @fact search1(b, 0) --> 3
+    @fact search1(b, 1) --> 3
+    @fact search1(b, 2) --> 3
+    @fact search1(b, 3) --> 3
+    @fact search1(b, 4) --> 4
+
+    b = convert(T, falses(1024))
+    for i in 1:1024; @fact search0(b, i) --> i; end
+    for i in 1:1024; @fact search1(b, i) --> 0; end
+
+    b = convert(T, trues(1024))
+    for i in 1:1024; @fact search0(b, i) --> 0; end
+    for i in 1:1024; @fact search1(b, i) --> i; end
+
+    function linsearch(x, bv, i)
+        while i ≤ endof(bv) && bv[i] != x
+            i += 1
+        end
+        return i > endof(bv) ? 0 : i
+    end
+    bitv = rand(1024) .> 0.5
+    b = convert(T, bitv)
+    for i in 1:1024
+        @fact search0(b, i) --> linsearch(0, bitv, i)
+        @fact search1(b, i) --> linsearch(1, bitv, i)
+    end
+
+    b = convert(T, rand(10) .> 0.5)
+    for i in 0:11; @fact typeof(search0(b, i)) --> Int; end
+    for i in 0:11; @fact typeof(search1(b, i)) --> Int; end
 end
 
 function test_long{T}(::Type{T})
@@ -204,6 +267,9 @@ facts("SucVector") do
     context("select") do
         test_select(SucVector)
     end
+    context("search") do
+        test_search(SucVector)
+    end
     context("long") do
         test_long(SucVector)
     end
@@ -232,6 +298,9 @@ facts("RRR") do
     end
     context("select") do
         test_select(RRR)
+    end
+    context("search") do
+        test_search(RRR)
     end
 end
 

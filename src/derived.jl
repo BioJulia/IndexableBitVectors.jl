@@ -1,6 +1,8 @@
 # The following methods can be derived from the rank1 method.
 #   * rank1(bv, i)     - the number of 1s' occurrences within bv[1:i]
 
+size(b::AbstractIndexableBitVector) = (length(b),)
+
 function getindex(b::AbstractIndexableBitVector, i::Integer)
     return rank1(b, i) != rank1(b, i - 1)
 end
@@ -39,4 +41,9 @@ function select(x::Integer, b::AbstractBitVector, i::Integer)
     return lo
 end
 
-size(b::AbstractIndexableBitVector) = (length(b),)
+function search(x::Integer, bv::AbstractBitVector, i::Integer)
+    return x == 0 ? search0(bv, i) : search1(bv, i)
+end
+
+search0(bv::AbstractBitVector, i::Integer) = select0(bv, rank0(bv, i - 1) + 1)
+search1(bv::AbstractBitVector, i::Integer) = select1(bv, rank1(bv, i - 1) + 1)
