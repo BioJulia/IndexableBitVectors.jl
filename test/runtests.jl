@@ -231,6 +231,69 @@ function test_search{T}(::Type{T})
     for i in 0:11; @fact typeof(search1(b, i)) --> Int; end
 end
 
+function test_rsearch{T}(::Type{T})
+    b = convert(T, Bool[])
+    @fact rsearch0(b, 0) --> 0
+    @fact rsearch0(b, 1) --> 0
+    @fact rsearch1(b, 0) --> 0
+    @fact rsearch1(b, 1) --> 0
+
+    b = convert(T, [false])
+    @fact rsearch0(b, 0) --> 0
+    @fact rsearch0(b, 1) --> 1
+    @fact rsearch0(b, 2) --> 1
+    @fact rsearch1(b, 0) --> 0
+    @fact rsearch1(b, 1) --> 0
+    @fact rsearch1(b, 2) --> 0
+
+    b = convert(T, [true])
+    @fact rsearch0(b, 0) --> 0
+    @fact rsearch0(b, 1) --> 0
+    @fact rsearch0(b, 2) --> 0
+    @fact rsearch1(b, 0) --> 0
+    @fact rsearch1(b, 1) --> 1
+    @fact rsearch1(b, 2) --> 1
+
+    b = convert(T, [false, false, true, true])
+    # rsearch0
+    @fact rsearch0(b, 0) --> 0
+    @fact rsearch0(b, 1) --> 1
+    @fact rsearch0(b, 2) --> 2
+    @fact rsearch0(b, 3) --> 2
+    @fact rsearch0(b, 4) --> 2
+    # rsearch1
+    @fact rsearch1(b, 0) --> 0
+    @fact rsearch1(b, 1) --> 0
+    @fact rsearch1(b, 2) --> 0
+    @fact rsearch1(b, 3) --> 3
+    @fact rsearch1(b, 4) --> 4
+
+    b = convert(T, falses(1024))
+    for i in 1:1024; @fact rsearch0(b, i) --> i; end
+    for i in 1:1024; @fact rsearch1(b, i) --> 0; end
+
+    b = convert(T, trues(1024))
+    for i in 1:1024; @fact rsearch0(b, i) --> 0; end
+    for i in 1:1024; @fact rsearch1(b, i) --> i; end
+
+    function linrsearch(x, bv, i)
+        while i ≥ 1 && bv[i] != x
+            i -= 1
+        end
+        return i < 1 ? 0 : i
+    end
+    bitv = rand(1024) .> 0.5
+    b = convert(T, bitv)
+    for i in 1:1024
+        @fact rsearch0(b, i) --> linrsearch(0, bitv, i)
+        @fact rsearch1(b, i) --> linrsearch(1, bitv, i)
+    end
+
+    b = convert(T, rand(10) .> 0.5)
+    for i in 0:11; @fact typeof(rsearch0(b, i)) --> Int; end
+    for i in 0:11; @fact typeof(rsearch1(b, i)) --> Int; end
+end
+
 function test_long{T}(::Type{T})
     len = 2^33 + 1000
     b  = bitrand(len)
@@ -270,6 +333,9 @@ facts("SucVector") do
     context("search") do
         test_search(SucVector)
     end
+    context("rsearch") do
+        test_rsearch(SucVector)
+    end
     context("long") do
         test_long(SucVector)
     end
@@ -301,6 +367,9 @@ facts("RRR") do
     end
     context("search") do
         test_search(RRR)
+    end
+    context("rsearch") do
+        test_rsearch(RRR)
     end
 end
 
