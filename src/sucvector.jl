@@ -157,3 +157,19 @@ end
 end
 
 @inline rank1(bv::SucVector, i::Integer) = rank1(bv, Int(i))
+
+# run getindex and rank1 in one shot
+function accrank1(bv::SucVector, i)
+    q, r = block_id(i)
+    @inbounds begin
+        block = bv.blocks[q]
+        # large block
+        rnk1 = Int(block.large) + Int(block.smalls[1]) << 32
+        q, r = chunk_id(r)
+        # small block
+        rnk1 += ifelse(q == 1, 0x00, block.smalls[q])
+        chunk = block.chunks[q]
+        rnk1 += count_ones(chunk & rmask(UInt64, r))
+    end
+    return (chunk >> (r - 1)) & 1 == 1, rnk1
+end
