@@ -1,217 +1,223 @@
 using IndexableBitVectors
-using FactCheck
+
+if VERSION >= v"0.5-"
+    using Base.Test
+else
+    using BaseTestNext
+    const Test = BaseTestNext
+end
 
 srand(12345)
 
 function test_access{T}(::Type{T})
     b = convert(T, Bool[])
-    @fact_throws b[0]
-    @fact_throws b[1]
+    @test_throws BoundsError b[0]
+    @test_throws BoundsError b[1]
 
     b = convert(T, [false])
-    @fact_throws b[0]
-    @fact b[1] --> 0
-    @fact_throws b[2]
+    @test_throws BoundsError b[0]
+    @test b[1] == 0
+    @test_throws BoundsError b[2]
 
     b = convert(T, [true])
-    @fact_throws b[0]
-    @fact b[1] --> 1
-    @fact_throws b[2]
+    @test_throws BoundsError b[0]
+    @test b[1] == 1
+    @test_throws BoundsError b[2]
 
     b = convert(T, [false, false, true, true])
-    @fact_throws b[0]
-    @fact b[1] --> 0
-    @fact b[2] --> 0
-    @fact b[3] --> 1
-    @fact b[4] --> 1
-    @fact_throws b[5]
+    @test_throws BoundsError b[0]
+    @test b[1] == 0
+    @test b[2] == 0
+    @test b[3] == 1
+    @test b[4] == 1
+    @test_throws BoundsError b[5]
 
     b = convert(T, falses(1024))
-    @fact b[1] --> false
-    @fact b[end] --> false
-    @fact all([b[i] for i in 1:1024]) --> false
+    @test b[1] == false
+    @test b[end] == false
+    @test all([b[i] for i in 1:1024]) == false
 
     b = convert(T, trues(1024))
-    @fact b[1] --> true
-    @fact b[end] --> true
-    @fact all([b[i] for i in 1:1024]) --> true
+    @test b[1] == true
+    @test b[end] == true
+    @test all([b[i] for i in 1:1024]) == true
 
     bitv = rand(1024) .> 0.5
     b = convert(T, bitv)
-    for i in 1:1024; @fact b[i] --> bitv[i]; end
+    for i in 1:1024; @test b[i] == bitv[i]; end
 
     b = convert(T, rand(10) .> 0.5)
-    for i in 1:10; @fact typeof(b[i]) --> Bool; end
+    for i in 1:10; @test isa(b[i], Bool); end
 end
 
 function test_rank{T}(::Type{T})
     b = convert(T, Bool[])
-    @fact rank0(b, 0) --> 0
-    @fact rank0(b, 1) --> 0
-    @fact rank1(b, 0) --> 0
-    @fact rank1(b, 1) --> 0
+    @test rank0(b, 0) == 0
+    @test rank0(b, 1) == 0
+    @test rank1(b, 0) == 0
+    @test rank1(b, 1) == 0
 
     b = convert(T, [false])
-    @fact rank0(b, 0) --> 0
-    @fact rank0(b, 1) --> 1
-    @fact rank0(b, 2) --> 1
-    @fact rank1(b, 0) --> 0
-    @fact rank1(b, 1) --> 0
-    @fact rank1(b, 2) --> 0
+    @test rank0(b, 0) == 0
+    @test rank0(b, 1) == 1
+    @test rank0(b, 2) == 1
+    @test rank1(b, 0) == 0
+    @test rank1(b, 1) == 0
+    @test rank1(b, 2) == 0
 
     b = convert(T, [true])
-    @fact rank0(b, 0) --> 0
-    @fact rank0(b, 1) --> 0
-    @fact rank0(b, 2) --> 0
-    @fact rank1(b, 0) --> 0
-    @fact rank1(b, 1) --> 1
-    @fact rank1(b, 2) --> 1
+    @test rank0(b, 0) == 0
+    @test rank0(b, 1) == 0
+    @test rank0(b, 2) == 0
+    @test rank1(b, 0) == 0
+    @test rank1(b, 1) == 1
+    @test rank1(b, 2) == 1
 
     b = convert(T, [false, false, true, true])
     # rank0
-    @fact rank0(b, 0) --> 0
-    @fact rank0(b, 1) --> 1
-    @fact rank0(b, 2) --> 2
-    @fact rank0(b, 3) --> 2
-    @fact rank0(b, 4) --> 2
-    @fact rank(0, b, 0) --> 0
-    @fact rank(0, b, 4) --> 2
-    @fact rank(0, b, 5) --> 2
+    @test rank0(b, 0) == 0
+    @test rank0(b, 1) == 1
+    @test rank0(b, 2) == 2
+    @test rank0(b, 3) == 2
+    @test rank0(b, 4) == 2
+    @test rank(0, b, 0) == 0
+    @test rank(0, b, 4) == 2
+    @test rank(0, b, 5) == 2
     # rank1
-    @fact rank1(b, 0) --> 0
-    @fact rank1(b, 1) --> 0
-    @fact rank1(b, 2) --> 0
-    @fact rank1(b, 3) --> 1
-    @fact rank1(b, 4) --> 2
-    @fact rank(1, b, 0) --> 0
-    @fact rank(1, b, 4) --> 2
-    @fact rank(1, b, 5) --> 2
+    @test rank1(b, 0) == 0
+    @test rank1(b, 1) == 0
+    @test rank1(b, 2) == 0
+    @test rank1(b, 3) == 1
+    @test rank1(b, 4) == 2
+    @test rank(1, b, 0) == 0
+    @test rank(1, b, 4) == 2
+    @test rank(1, b, 5) == 2
 
     b = convert(T, falses(1024))
-    for i in 1:1024; @fact rank0(b, i) --> i; end
-    for i in 1:1024; @fact rank1(b, i) --> 0; end
+    for i in 1:1024; @test rank0(b, i) == i; end
+    for i in 1:1024; @test rank1(b, i) == 0; end
 
     b = convert(T, trues(1024))
-    for i in 1:1024; @fact rank0(b, i) --> 0; end
-    for i in 1:1024; @fact rank1(b, i) --> i; end
+    for i in 1:1024; @test rank0(b, i) == 0; end
+    for i in 1:1024; @test rank1(b, i) == i; end
 
     bitv = rand(1024) .> 0.5
     b = convert(T, bitv)
-    for i in 1:1024; @fact rank0(b, i) --> rank0(bitv, i); end
-    for i in 1:1024; @fact rank1(b, i) --> rank1(bitv, i); end
+    for i in 1:1024; @test rank0(b, i) == rank0(bitv, i); end
+    for i in 1:1024; @test rank1(b, i) == rank1(bitv, i); end
 
     b = convert(T, rand(10) .> 0.5)
-    for i in 0:11; @fact typeof(rank0(b, i)) --> Int; end
-    for i in 0:11; @fact typeof(rank1(b, i)) --> Int; end
+    for i in 0:11; @test isa(rank0(b, i), Int); end
+    for i in 0:11; @test isa(rank1(b, i), Int); end
 end
 
 function test_select{T}(::Type{T})
     b = convert(T, Bool[])
-    @fact select0(b, -1) --> 0
-    @fact select0(b, 0) --> 0
-    @fact select0(b, 1) --> 0
-    @fact select1(b, -1) --> 0
-    @fact select1(b, 0) --> 0
-    @fact select1(b, 1) --> 0
+    @test select0(b, -1) == 0
+    @test select0(b, 0) == 0
+    @test select0(b, 1) == 0
+    @test select1(b, -1) == 0
+    @test select1(b, 0) == 0
+    @test select1(b, 1) == 0
 
     b = convert(T, [false])
-    @fact select0(b, -1) --> 0
-    @fact select0(b, 0) --> 0
-    @fact select0(b, 1) --> 1
-    @fact select0(b, 2) --> 0
-    @fact select1(b, -1) --> 0
-    @fact select1(b, 0) --> 0
-    @fact select1(b, 1) --> 0
-    @fact select1(b, 2) --> 0
+    @test select0(b, -1) == 0
+    @test select0(b, 0) == 0
+    @test select0(b, 1) == 1
+    @test select0(b, 2) == 0
+    @test select1(b, -1) == 0
+    @test select1(b, 0) == 0
+    @test select1(b, 1) == 0
+    @test select1(b, 2) == 0
 
     b = convert(T, [true])
-    @fact select0(b, -1) --> 0
-    @fact select0(b, 0) --> 0
-    @fact select0(b, 1) --> 0
-    @fact select0(b, 2) --> 0
-    @fact select1(b, -1) --> 0
-    @fact select1(b, 0) --> 0
-    @fact select1(b, 1) --> 1
-    @fact select1(b, 2) --> 0
+    @test select0(b, -1) == 0
+    @test select0(b, 0) == 0
+    @test select0(b, 1) == 0
+    @test select0(b, 2) == 0
+    @test select1(b, -1) == 0
+    @test select1(b, 0) == 0
+    @test select1(b, 1) == 1
+    @test select1(b, 2) == 0
 
     b = convert(T, [false, false, true, true])
     # select0
-    @fact select0(b, -1) --> 0
-    @fact select0(b, 0) --> 0
-    @fact select0(b, 1) --> 1
-    @fact select0(b, 2) --> 2
-    @fact select0(b, 3) --> 0
+    @test select0(b, -1) == 0
+    @test select0(b, 0) == 0
+    @test select0(b, 1) == 1
+    @test select0(b, 2) == 2
+    @test select0(b, 3) == 0
     # select1
-    @fact select1(b, -1) --> 0
-    @fact select1(b, 0) --> 0
-    @fact select1(b, 1) --> 3
-    @fact select1(b, 2) --> 4
-    @fact select1(b, 3) --> 0
+    @test select1(b, -1) == 0
+    @test select1(b, 0) == 0
+    @test select1(b, 1) == 3
+    @test select1(b, 2) == 4
+    @test select1(b, 3) == 0
 
     b = convert(T, falses(1024))
-    for i in 0:1024; @fact select0(b, i) --> i; end
-    @fact select0(b, 1025) --> 0
-    for i in 0:1025; @fact select1(b, i) --> 0; end
+    for i in 0:1024; @test select0(b, i) == i; end
+    @test select0(b, 1025) == 0
+    for i in 0:1025; @test select1(b, i) == 0; end
 
     b = convert(T, trues(1024))
-    for i in 0:1025; @fact select0(b, i) --> 0; end
-    for i in 0:1024; @fact select1(b, i) --> i; end
-    @fact select1(b, 1025) --> 0
+    for i in 0:1025; @test select0(b, i) == 0; end
+    for i in 0:1024; @test select1(b, i) == i; end
+    @test select1(b, 1025) == 0
 
     bitv = rand(1024) .> 0.5
     b = convert(T, bitv)
-    for i in 1:1024; @fact select0(b, i) --> select0(bitv, i); end
-    for i in 1:1024; @fact select1(b, i) --> select1(bitv, i); end
+    for i in 1:1024; @test select0(b, i) == select0(bitv, i); end
+    for i in 1:1024; @test select1(b, i) == select1(bitv, i); end
 
     b = convert(T, rand(10) .> 0.5)
-    for i in 0:11; @fact typeof(select0(b, i)) --> Int; end
-    for i in 0:11; @fact typeof(select1(b, i)) --> Int; end
+    for i in 0:11; @test isa(select0(b, i), Int); end
+    for i in 0:11; @test isa(select1(b, i), Int); end
 end
 
 function test_search{T}(::Type{T})
     b = convert(T, Bool[])
-    @fact search0(b, 0) --> 0
-    @fact search0(b, 1) --> 0
-    @fact search1(b, 0) --> 0
-    @fact search1(b, 1) --> 0
+    @test search0(b, 0) == 0
+    @test search0(b, 1) == 0
+    @test search1(b, 0) == 0
+    @test search1(b, 1) == 0
 
     b = convert(T, [false])
-    @fact search0(b, 0) --> 1
-    @fact search0(b, 1) --> 1
-    @fact search0(b, 2) --> 0
-    @fact search1(b, 0) --> 0
-    @fact search1(b, 1) --> 0
-    @fact search1(b, 2) --> 0
+    @test search0(b, 0) == 1
+    @test search0(b, 1) == 1
+    @test search0(b, 2) == 0
+    @test search1(b, 0) == 0
+    @test search1(b, 1) == 0
+    @test search1(b, 2) == 0
 
     b = convert(T, [true])
-    @fact search0(b, 0) --> 0
-    @fact search0(b, 1) --> 0
-    @fact search0(b, 2) --> 0
-    @fact search1(b, 0) --> 1
-    @fact search1(b, 1) --> 1
-    @fact search1(b, 2) --> 0
+    @test search0(b, 0) == 0
+    @test search0(b, 1) == 0
+    @test search0(b, 2) == 0
+    @test search1(b, 0) == 1
+    @test search1(b, 1) == 1
+    @test search1(b, 2) == 0
 
     b = convert(T, [false, false, true, true])
     # search0
-    @fact search0(b, 0) --> 1
-    @fact search0(b, 1) --> 1
-    @fact search0(b, 2) --> 2
-    @fact search0(b, 3) --> 0
-    @fact search0(b, 4) --> 0
+    @test search0(b, 0) == 1
+    @test search0(b, 1) == 1
+    @test search0(b, 2) == 2
+    @test search0(b, 3) == 0
+    @test search0(b, 4) == 0
     # search1
-    @fact search1(b, 0) --> 3
-    @fact search1(b, 1) --> 3
-    @fact search1(b, 2) --> 3
-    @fact search1(b, 3) --> 3
-    @fact search1(b, 4) --> 4
+    @test search1(b, 0) == 3
+    @test search1(b, 1) == 3
+    @test search1(b, 2) == 3
+    @test search1(b, 3) == 3
+    @test search1(b, 4) == 4
 
     b = convert(T, falses(1024))
-    for i in 1:1024; @fact search0(b, i) --> i; end
-    for i in 1:1024; @fact search1(b, i) --> 0; end
+    for i in 1:1024; @test search0(b, i) == i; end
+    for i in 1:1024; @test search1(b, i) == 0; end
 
     b = convert(T, trues(1024))
-    for i in 1:1024; @fact search0(b, i) --> 0; end
-    for i in 1:1024; @fact search1(b, i) --> i; end
+    for i in 1:1024; @test search0(b, i) == 0; end
+    for i in 1:1024; @test search1(b, i) == i; end
 
     function linsearch(x, bv, i)
         while i ≤ endof(bv) && bv[i] != x
@@ -222,59 +228,59 @@ function test_search{T}(::Type{T})
     bitv = rand(1024) .> 0.5
     b = convert(T, bitv)
     for i in 1:1024
-        @fact search0(b, i) --> linsearch(0, bitv, i)
-        @fact search1(b, i) --> linsearch(1, bitv, i)
+        @test search0(b, i) == linsearch(0, bitv, i)
+        @test search1(b, i) == linsearch(1, bitv, i)
     end
 
     b = convert(T, rand(10) .> 0.5)
-    for i in 0:11; @fact typeof(search0(b, i)) --> Int; end
-    for i in 0:11; @fact typeof(search1(b, i)) --> Int; end
+    for i in 0:11; @test isa(search0(b, i), Int); end
+    for i in 0:11; @test isa(search1(b, i), Int); end
 end
 
 function test_rsearch{T}(::Type{T})
     b = convert(T, Bool[])
-    @fact rsearch0(b, 0) --> 0
-    @fact rsearch0(b, 1) --> 0
-    @fact rsearch1(b, 0) --> 0
-    @fact rsearch1(b, 1) --> 0
+    @test rsearch0(b, 0) == 0
+    @test rsearch0(b, 1) == 0
+    @test rsearch1(b, 0) == 0
+    @test rsearch1(b, 1) == 0
 
     b = convert(T, [false])
-    @fact rsearch0(b, 0) --> 0
-    @fact rsearch0(b, 1) --> 1
-    @fact rsearch0(b, 2) --> 1
-    @fact rsearch1(b, 0) --> 0
-    @fact rsearch1(b, 1) --> 0
-    @fact rsearch1(b, 2) --> 0
+    @test rsearch0(b, 0) == 0
+    @test rsearch0(b, 1) == 1
+    @test rsearch0(b, 2) == 1
+    @test rsearch1(b, 0) == 0
+    @test rsearch1(b, 1) == 0
+    @test rsearch1(b, 2) == 0
 
     b = convert(T, [true])
-    @fact rsearch0(b, 0) --> 0
-    @fact rsearch0(b, 1) --> 0
-    @fact rsearch0(b, 2) --> 0
-    @fact rsearch1(b, 0) --> 0
-    @fact rsearch1(b, 1) --> 1
-    @fact rsearch1(b, 2) --> 1
+    @test rsearch0(b, 0) == 0
+    @test rsearch0(b, 1) == 0
+    @test rsearch0(b, 2) == 0
+    @test rsearch1(b, 0) == 0
+    @test rsearch1(b, 1) == 1
+    @test rsearch1(b, 2) == 1
 
     b = convert(T, [false, false, true, true])
     # rsearch0
-    @fact rsearch0(b, 0) --> 0
-    @fact rsearch0(b, 1) --> 1
-    @fact rsearch0(b, 2) --> 2
-    @fact rsearch0(b, 3) --> 2
-    @fact rsearch0(b, 4) --> 2
+    @test rsearch0(b, 0) == 0
+    @test rsearch0(b, 1) == 1
+    @test rsearch0(b, 2) == 2
+    @test rsearch0(b, 3) == 2
+    @test rsearch0(b, 4) == 2
     # rsearch1
-    @fact rsearch1(b, 0) --> 0
-    @fact rsearch1(b, 1) --> 0
-    @fact rsearch1(b, 2) --> 0
-    @fact rsearch1(b, 3) --> 3
-    @fact rsearch1(b, 4) --> 4
+    @test rsearch1(b, 0) == 0
+    @test rsearch1(b, 1) == 0
+    @test rsearch1(b, 2) == 0
+    @test rsearch1(b, 3) == 3
+    @test rsearch1(b, 4) == 4
 
     b = convert(T, falses(1024))
-    for i in 1:1024; @fact rsearch0(b, i) --> i; end
-    for i in 1:1024; @fact rsearch1(b, i) --> 0; end
+    for i in 1:1024; @test rsearch0(b, i) == i; end
+    for i in 1:1024; @test rsearch1(b, i) == 0; end
 
     b = convert(T, trues(1024))
-    for i in 1:1024; @fact rsearch0(b, i) --> 0; end
-    for i in 1:1024; @fact rsearch1(b, i) --> i; end
+    for i in 1:1024; @test rsearch0(b, i) == 0; end
+    for i in 1:1024; @test rsearch1(b, i) == i; end
 
     function linrsearch(x, bv, i)
         while i ≥ 1 && bv[i] != x
@@ -285,13 +291,13 @@ function test_rsearch{T}(::Type{T})
     bitv = rand(1024) .> 0.5
     b = convert(T, bitv)
     for i in 1:1024
-        @fact rsearch0(b, i) --> linrsearch(0, bitv, i)
-        @fact rsearch1(b, i) --> linrsearch(1, bitv, i)
+        @test rsearch0(b, i) == linrsearch(0, bitv, i)
+        @test rsearch1(b, i) == linrsearch(1, bitv, i)
     end
 
     b = convert(T, rand(10) .> 0.5)
-    for i in 0:11; @fact typeof(rsearch0(b, i)) --> Int; end
-    for i in 0:11; @fact typeof(rsearch1(b, i)) --> Int; end
+    for i in 0:11; @test isa(rsearch0(b, i), Int); end
+    for i in 0:11; @test isa(rsearch1(b, i), Int); end
 end
 
 function test_long{T}(::Type{T})
@@ -302,41 +308,41 @@ function test_long{T}(::Type{T})
     end
     b′ = T(b)
     for i in [1, 2, 2^32-1, 2^32, 2^32+1, len-1, len]
-        @fact b′[i] --> b[i]
-        @fact rank1(b′, i) --> sum(b[1:i])
+        @test b′[i] == b[i]
+        @test rank1(b′, i) == sum(b[1:i])
     end
 end
 
 
-facts("BitVector") do
-    context("access") do
+@testset "BitVector" begin
+    @testset "access" begin
         test_access(BitVector)
     end
-    context("rank") do
+    @testset "rank" begin
         test_rank(BitVector)
     end
-    context("select") do
+    @testset "select" begin
         test_select(BitVector)
     end
 end
 
-facts("SucVector") do
-    context("access") do
+@testset "SucVector" begin
+    @testset "access" begin
         test_access(SucVector)
     end
-    context("rank") do
+    @testset "rank" begin
         test_rank(SucVector)
     end
-    context("select") do
+    @testset "select" begin
         test_select(SucVector)
     end
-    context("search") do
+    @testset "search" begin
         test_search(SucVector)
     end
-    context("rsearch") do
+    @testset "rsearch" begin
         test_rsearch(SucVector)
     end
-    context("long") do
+    @testset "long" begin
         test_long(SucVector)
     end
 end
@@ -355,45 +361,45 @@ facts("CompactBitVector") do
 end
 =#
 
-facts("RRR") do
-    context("access") do
+@testset "RRR" begin
+    @testset "access" begin
         test_access(RRR)
     end
-    context("rank") do
+    @testset "rank" begin
         test_rank(RRR)
     end
-    context("select") do
+    @testset "select" begin
         test_select(RRR)
     end
-    context("search") do
+    @testset "search" begin
         test_search(RRR)
     end
-    context("rsearch") do
+    @testset "rsearch" begin
         test_rsearch(RRR)
     end
 end
 
-facts("LargeRRR") do
-    context("access") do
+@testset "LargeRRR" begin
+    @testset "access" begin
         test_access(IndexableBitVectors.LargeRRR)
     end
-    context("rank") do
+    @testset "rank" begin
         test_rank(IndexableBitVectors.LargeRRR)
     end
-    context("select") do
+    @testset "select" begin
         test_select(IndexableBitVectors.LargeRRR)
     end
 end
 
-facts("sizeof") do
-    context("compressible") do
+@testset "Size" begin
+    @testset "compressible" begin
         bv = falses(10_000)
-        @fact sizeof(RRR(bv)) < sizeof(bv) < sizeof(SucVector(bv)) --> true
+        @test sizeof(RRR(bv)) < sizeof(bv) < sizeof(SucVector(bv))
         bv = trues(10_000)
-        @fact sizeof(RRR(bv)) < sizeof(bv) < sizeof(SucVector(bv)) --> true
+        @test sizeof(RRR(bv)) < sizeof(bv) < sizeof(SucVector(bv))
     end
-    context("incompressible") do
+    @testset "incompressible" begin
         bv = bitrand(10_000)
-        @fact sizeof(bv) < sizeof(SucVector(bv)) < sizeof(RRR(bv)) --> true
+        @test sizeof(bv) < sizeof(SucVector(bv)) < sizeof(RRR(bv))
     end
 end
