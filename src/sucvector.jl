@@ -62,6 +62,8 @@ end
 
 SucVector() = SucVector(Block[], 0)
 
+Base.copy(bv::SucVector) = SucVector(copy(bv.blocks), bv.len)
+
 # data size of payload in bytes
 sizeof(bv::SucVector) = sizeof(bv.blocks)
 

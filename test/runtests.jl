@@ -313,6 +313,20 @@ function test_long{T}(::Type{T})
     end
 end
 
+function test_copy{T}(::Type{T})
+    b = convert(T, Bool[])
+    @test copy(b) == b
+    @test copy(b) !== b
+
+    b = convert(T, rand(100) .> 0.5)
+    @test copy(b) == b
+    @test copy(b) !== b
+
+    b = convert(T, rand(10000) .> 0.5)
+    @test copy(b) == b
+    @test copy(b) !== b
+end
+
 
 @testset "BitVector" begin
     @testset "access" begin
@@ -344,6 +358,9 @@ end
     end
     @testset "long" begin
         test_long(SucVector)
+    end
+    @testset "copy" begin
+        test_copy(SucVector)
     end
 end
 
@@ -377,6 +394,9 @@ end
     @testset "rsearch" begin
         test_rsearch(RRR)
     end
+    @testset "copy" begin
+        test_copy(RRR)
+    end
 end
 
 @testset "LargeRRR" begin
@@ -388,6 +408,9 @@ end
     end
     @testset "select" begin
         test_select(IndexableBitVectors.LargeRRR)
+    end
+    @testset "copy" begin
+        test_copy(IndexableBitVectors.LargeRRR)
     end
 end
 
