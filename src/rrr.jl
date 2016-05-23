@@ -66,6 +66,8 @@ end
 blocksizeof(::Type{RRR}) = 15
 empty_rs(::Type{RRR}) = UInt16[]
 
+Base.copy(rrr::RRR) = RRR(copy(rrr.ks), copy(rrr.rs), copy(rrr.superblocks), rrr.len)
+
 RRR() = RRR(UInt8[], UInt8[], SuperBlock[], 0)
 convert(::Type{RRR}, vec::AbstractVector{Bool}) = make_rrr(RRR, vec)
 
@@ -123,6 +125,9 @@ end
 blocksizeof(::Type{LargeRRR}) = 63
 empty_rs(::Type{LargeRRR}) = UInt64[]
 
+Base.copy(rrr::LargeRRR) = LargeRRR(
+    copy(rrr.ks), copy(rrr.rs), copy(rrr.superblocks), rrr.len)
+
 # 3 elements of ks store 4 classes
 # ks:      |........|........|........|  8bits for each
 # classes: |......       .... ..      |  6bits for each
@@ -179,7 +184,7 @@ function classof(rrr::LargeRRR, j::Int)
     return k
 end
 
-function make_rrr{T<:Union{RRR,LargeRRR}}(::Type{T}, src::Union{BitVector,Vector})
+function make_rrr{T<:Union{RRR,LargeRRR}}(::Type{T}, src::AbstractVector{Bool})
     len = length(src)
     if len > typemax(Int)
         error("the bit vector is too large")
