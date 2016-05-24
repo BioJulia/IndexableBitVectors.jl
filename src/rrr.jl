@@ -162,24 +162,18 @@ end
 
 function classof(rrr::LargeRRR, j::Int)
     ki, rem = divrem(j - 1, 4)
-    # NOTE: convert(UInt8, ...) is not needed in v0.4
-    @inbounds @switch rem begin
-        @case 0
-            k = rrr.ks[3ki+1] >> 2
-            break
-        @case 1
-            k1 = (rmask(UInt8, 2) & rrr.ks[3ki+1]) << 4
-            k2 = rrr.ks[3ki+2] >> 4
-            k = convert(UInt8, k1 + k2)
-            break
-        @case 2
-            k1 = (rmask(UInt8, 4) & rrr.ks[3ki+2]) << 2
-            k2 = rrr.ks[3ki+3] >> 6
-            k = convert(UInt8, k1 + k2)
-            break
-        @default  # @case 3
-            k = rrr.ks[3ki+3] & rmask(UInt8, 6)
-            break
+    if rem == 0
+        k = rrr.ks[3ki+1] >> 2
+    elseif rem == 1
+        k1 = (rmask(UInt8, 2) & rrr.ks[3ki+1]) << 4
+        k2 = rrr.ks[3ki+2] >> 4
+        k = convert(UInt8, k1 + k2)
+    elseif rem == 2
+        k1 = (rmask(UInt8, 4) & rrr.ks[3ki+2]) << 2
+        k2 = rrr.ks[3ki+3] >> 6
+        k = convert(UInt8, k1 + k2)
+    else  # rem == 3
+        k = rrr.ks[3ki+3] & rmask(UInt8, 6)
     end
     return k
 end
@@ -219,24 +213,18 @@ function make_rrr{T<:Union{RRR,LargeRRR}}(::Type{T}, src::AbstractVector{Bool})
                 ks[end] |= k
             end
         elseif T === LargeRRR
-            if i % 4 == 1
+            rem = i % 4
+            if rem == 1
                 push!(ks, 0, 0, 0)
-            end
-            @switch i % 4 begin
-                @case 1
-                    ks[end-2] |= k << 2
-                    break
-                @case 2
-                    ks[end-2] |= k >> 4
-                    ks[end-1] |= k << 4
-                    break
-                @case 3
-                    ks[end-1] |= k >> 2
-                    ks[end]   |= k << 6
-                    break
-                @default  # @case 0
-                    ks[end]   |= k
-                    break
+                ks[end-2] |= k << 2
+            elseif rem == 2
+                ks[end-2] |= k >> 4
+                ks[end-1] |= k << 4
+            elseif rem == 3
+                ks[end-1] |= k >> 2
+                ks[end]   |= k << 6
+            else  # rem == 4
+                ks[end]   |= k
             end
         else
             error()
