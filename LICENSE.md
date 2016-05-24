@@ -1,6 +1,6 @@
-The IndexableDicts.jl package is licensed under the MIT "Expat" License:
+The IndexableBitVectors.jl package is licensed under the MIT "Expat" License:
 
-> Copyright (c) 2015: Kenta Sato.
+> Copyright (c) 2014: BioJulia.
 >
 > Permission is hereby granted, free of charge, to any person obtaining
 > a copy of this software and associated documentation files (the
