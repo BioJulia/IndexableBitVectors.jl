@@ -1,4 +1,4 @@
-isdefined(Base, :__precompile__) && __precompile__()
+__precompile__()
 
 module IndexableBitVectors
 
@@ -34,8 +34,6 @@ import Base:
     select,
     size,
     sizeof
-
-using Switch
 
 include("common.jl")
 include("utils.jl")
