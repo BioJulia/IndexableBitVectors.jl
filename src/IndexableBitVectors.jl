@@ -34,6 +34,7 @@ import Base:
     select,
     size,
     sizeof
+import Compat: @compat
 
 include("common.jl")
 include("utils.jl")
