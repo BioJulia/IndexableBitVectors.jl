@@ -4,4 +4,4 @@
 @compat abstract type AbstractIndexableBitVector <: AbstractVector{Bool} end
 const AbstractBitVector = Union{BitVector,AbstractIndexableBitVector}
 
-size(b::AbstractIndexableBitVector) = (length(b),)
+Base.size(b::AbstractIndexableBitVector) = (length(b),)

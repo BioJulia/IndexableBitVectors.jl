@@ -1,7 +1,7 @@
 # The following methods can be derived from the rank1 method.
 #   * rank1(bv, i)     - the number of 1s' occurrences within bv[1:i]
 
-function getindex(b::AbstractIndexableBitVector, i::Integer)
+function Base.getindex(b::AbstractIndexableBitVector, i::Integer)
     return rank1(b, i) != rank1(b, i - 1)
 end
 
@@ -15,7 +15,7 @@ end
 
 function select(x::Integer, b::AbstractBitVector, i::Integer)
     lo = 0
-    hi = endof(b)
+    hi = lastindex(b)
     if i ≤ 0 || rank(x, b, hi) < i
         return 0
     end

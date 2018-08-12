@@ -22,18 +22,6 @@ export
     rsearch0,
     rsearch1
 
-import Base:
-    convert,
-    endof,
-    getindex,
-    length,
-    push!,
-    rank,
-    rsearch,
-    search,
-    select,
-    size,
-    sizeof
 import Compat: @compat
 
 include("common.jl")

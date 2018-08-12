@@ -28,7 +28,7 @@
 const superblock_sampling_rate = 16  # blocks per superblock
 
 # sampling rate controls the tradeoff between performance and space
-immutable SuperBlock
+struct SuperBlock
     # partial sum of rank values
     rank::UInt64
     # offset of the starting position of r-index
@@ -50,7 +50,7 @@ Let `n` be the length of a `RRR`, the asymptotic query times are
 
 See (Raman et al, 2007, doi:10.1145/1290672.1290680) for more details.
 """
-type RRR <: AbstractIndexableBitVector
+struct RRR <: AbstractIndexableBitVector
     # class values for each block
     # class values are encoded in 4 bits, hence `ks` is a packed array of 4-bit elements
     ks::Vector{UInt8}
@@ -69,14 +69,15 @@ empty_rs(::Type{RRR}) = UInt16[]
 Base.copy(rrr::RRR) = RRR(copy(rrr.ks), copy(rrr.rs), copy(rrr.superblocks), rrr.len)
 
 RRR() = RRR(UInt8[], UInt8[], SuperBlock[], 0)
-convert(::Type{RRR}, vec::AbstractVector{Bool}) = make_rrr(RRR, vec)
+RRR(vec::AbstractVector{Bool}) = make_rrr(RRR, vec)
+Base.convert(::Type{RRR}, vec::AbstractVector{Bool}) = RRR(vec)
 
-length(rrr::RRR) = rrr.len
+Base.length(rrr::RRR) = rrr.len
 
 # data size of payload in bytes
-sizeof(rrr::RRR) = sizeof(rrr.ks) + sizeof(rrr.rs) + sizeof(rrr.superblocks)
+Base.sizeof(rrr::RRR) = sizeof(rrr.ks) + sizeof(rrr.rs) + sizeof(rrr.superblocks)
 
-function getindex(rrr::RRR, i::Integer)
+function Base.getindex(rrr::RRR, i::Integer)
     checkbounds(rrr, i)
     blocksize = blocksizeof(RRR)
     j = div(i - 1, blocksize) + 1
@@ -115,7 +116,7 @@ end
 
 # RRR of Navarro and Providel
 # the block size is 63 and the block is decoded on the fly.
-type LargeRRR <: AbstractIndexableBitVector
+struct LargeRRR <: AbstractIndexableBitVector
     ks::Vector{UInt8}
     rs::Vector{UInt64}
     superblocks::Vector{SuperBlock}
@@ -134,11 +135,11 @@ Base.copy(rrr::LargeRRR) = LargeRRR(
 #          |      .. ....       ......|
 
 LargeRRR() = LargeRRR(UInt8[], UInt64[], SuperBlock[], 0)
-convert(::Type{LargeRRR}, vec::Union{BitVector,Vector{Bool}}) = make_rrr(LargeRRR, vec)
+Base.convert(::Type{LargeRRR}, vec::Union{BitVector,Vector{Bool}}) = make_rrr(LargeRRR, vec)
 
-length(rrr::LargeRRR) = rrr.len
+Base.length(rrr::LargeRRR) = rrr.len
 
-function getindex(rrr::LargeRRR, i::Integer)
+function Base.getindex(rrr::LargeRRR, i::Integer)
     checkbounds(rrr, i)
     blocksize = blocksizeof(LargeRRR)
     j = div(i - 1, blocksize) + 1
@@ -178,7 +179,7 @@ function classof(rrr::LargeRRR, j::Int)
     return k
 end
 
-function make_rrr{T<:Union{RRR,LargeRRR}}(::Type{T}, src::AbstractVector{Bool})
+function make_rrr(::Type{T}, src::AbstractVector{Bool}) where {T<:Union{RRR,LargeRRR}}
     len = length(src)
     if len > typemax(Int)
         error("the bit vector is too large")
@@ -283,21 +284,21 @@ function read_bits(src, from, len)
     @assert 1 ≤ len ≤ 64
     bits = zero(UInt64)
     to = from + len - 1
-    for i in from:min(to, endof(src))
+    for i in from:min(to, lastindex(src))
         bits <<= 1
         if src[i]
             bits |= 1
         end
     end
-    if to > endof(src)
+    if to > lastindex(src)
         # align bits to the left
-        bits <<= to - endof(src)
+        bits <<= to - lastindex(src)
     end
     return bits
 end
 
 # offset is 1-based index
-function read_rindex{T<:Unsigned}(rs::Vector{T}, offset::Int, len::Int)
+function read_rindex(rs::Vector{T}, offset::Int, len::Int) where {T<:Unsigned}
     w = bitsof(T)
     ri, rem = divrem(offset - 1, w)
     if w - rem ≥ len
@@ -382,11 +383,11 @@ end
 # Look-up Tables
 # --------------
 
-immutable CombinationTable
+struct CombinationTable
     table::Matrix{Int}
 end
 
-@inline function getindex(comb::CombinationTable, t::Int, k::Integer)
+@inline function Base.getindex(comb::CombinationTable, t::Int, k::Integer)
     @inbounds c = comb.table[t+1,k+1]
     return c
 end
