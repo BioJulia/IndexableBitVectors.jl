@@ -1,6 +1,6 @@
 using IndexableBitVectors
 
-srand(12345)
+Random.seed!(12345)
 
 const step = 16
 
@@ -45,7 +45,7 @@ function bench_select1(bv, n)
 end
 
 let
-    name = shift!(ARGS)
+    name = popfirst!(ARGS)
     T = name == "CompactBitVector" ? CompactBitVector :
         name == "SucVector" ? SucVector :
         name == "RRR" ? RRR :
