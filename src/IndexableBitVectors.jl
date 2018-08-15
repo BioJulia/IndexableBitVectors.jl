@@ -22,8 +22,6 @@ export
     rsearch0,
     rsearch1
 
-import Compat: @compat
-
 include("common.jl")
 include("utils.jl")
 include("bitvector.jl")
