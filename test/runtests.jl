@@ -1,15 +1,10 @@
 using IndexableBitVectors
+using Test
+using Random
 
-if VERSION >= v"0.5-"
-    using Base.Test
-else
-    using BaseTestNext
-    const Test = BaseTestNext
-end
+Random.seed!(12345)
 
-srand(12345)
-
-function test_access{T}(::Type{T})
+function test_access(::Type{T}) where T
     b = convert(T, Bool[])
     @test_throws BoundsError b[0]
     @test_throws BoundsError b[1]
@@ -50,7 +45,7 @@ function test_access{T}(::Type{T})
     for i in 1:10; @test isa(b[i], Bool); end
 end
 
-function test_rank{T}(::Type{T})
+function test_rank(::Type{T}) where T
     b = convert(T, Bool[])
     @test rank0(b, 0) == 0
     @test rank0(b, 1) == 0
@@ -111,7 +106,7 @@ function test_rank{T}(::Type{T})
     for i in 0:11; @test isa(rank1(b, i), Int); end
 end
 
-function test_select{T}(::Type{T})
+function test_select(::Type{T}) where T
     b = convert(T, Bool[])
     @test select0(b, -1) == 0
     @test select0(b, 0) == 0
@@ -174,7 +169,7 @@ function test_select{T}(::Type{T})
     for i in 0:11; @test isa(select1(b, i), Int); end
 end
 
-function test_search{T}(::Type{T})
+function test_search(::Type{T}) where T
     b = convert(T, Bool[])
     @test search0(b, 0) == 0
     @test search0(b, 1) == 0
@@ -220,10 +215,10 @@ function test_search{T}(::Type{T})
     for i in 1:1024; @test search1(b, i) == i; end
 
     function linsearch(x, bv, i)
-        while i ≤ endof(bv) && bv[i] != x
+        while i ≤ lastindex(bv) && bv[i] != x
             i += 1
         end
-        return i > endof(bv) ? 0 : i
+        return i > lastindex(bv) ? 0 : i
     end
     bitv = rand(1024) .> 0.5
     b = convert(T, bitv)
@@ -237,7 +232,7 @@ function test_search{T}(::Type{T})
     for i in 0:11; @test isa(search1(b, i), Int); end
 end
 
-function test_rsearch{T}(::Type{T})
+function test_rsearch(::Type{T}) where T
     b = convert(T, Bool[])
     @test rsearch0(b, 0) == 0
     @test rsearch0(b, 1) == 0
@@ -300,7 +295,7 @@ function test_rsearch{T}(::Type{T})
     for i in 0:11; @test isa(rsearch1(b, i), Int); end
 end
 
-function test_long{T}(::Type{T})
+function test_long(::Type{T}) where T
     len = 2^33 + 1000
     b  = bitrand(len)
     while sum(b) ≤ typemax(UInt32)
@@ -313,7 +308,7 @@ function test_long{T}(::Type{T})
     end
 end
 
-function test_copy{T}(::Type{T})
+function test_copy(::Type{T}) where T
     b = convert(T, Bool[])
     @test copy(b) == b
     @test copy(b) !== b

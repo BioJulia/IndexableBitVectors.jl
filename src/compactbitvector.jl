@@ -22,7 +22,7 @@
 # sbs:    |  smallblock 1  |  smallblock 2  |  smallblock 3  |  smallblock 4  |
 # lbs:    |                            large block                            |
 
-type CompactBitVector <: AbstractIndexableBitVector
+struct CompactBitVector <: AbstractIndexableBitVector
     # data
     bits::BitVector
     # large blocks
@@ -35,7 +35,7 @@ function CompactBitVector()
     return CompactBitVector(convert(BitVector, Bool[]), UInt32[], UInt8[])
 end
 
-function convert(::Type{CompactBitVector}, v::Union{BitVector,Vector{Bool}})
+function Base.convert(::Type{CompactBitVector}, v::Union{BitVector,Vector{Bool}})
     bv = CompactBitVector()
     for bit in v
         push!(bv, bit != 0)
@@ -45,14 +45,14 @@ end
 
 maxlength(::Type{CompactBitVector}) = 2^40 - 1
 
-immutable LargeBlock end
-immutable SmallBlock end
+struct LargeBlock end
+struct SmallBlock end
 
 blocksizeof(::Type{SmallBlock}) =  64
 blocksizeof(::Type{LargeBlock}) = 256
 const n_smallblocks_per_largeblock = div(blocksizeof(LargeBlock), blocksizeof(SmallBlock))
 
-function push!(v::CompactBitVector, bit::Bool)
+function Base.push!(v::CompactBitVector, bit::Bool)
     len = length(v) + 1
     if len > maxlength(CompactBitVector)
         error("overflow")
@@ -72,14 +72,14 @@ function push!(v::CompactBitVector, bit::Bool)
     push!(v.bits, bit)
     return v
 end
-push!(v::CompactBitVector, b::Integer) = push!(v::CompactBitVector, b != 0)
+Base.push!(v::CompactBitVector, b::Integer) = push!(v::CompactBitVector, b != 0)
 
-length(v::CompactBitVector) = length(v.bits)
+Base.length(v::CompactBitVector) = length(v.bits)
 
-@inline getindex(v::CompactBitVector, i::Integer) = v.bits[i]
+@inline Base.getindex(v::CompactBitVector, i::Integer) = v.bits[i]
 
 @inline function rank1(v::CompactBitVector, i::Integer)
-    if i < 0 || endof(v) < i
+    if i < 0 || lastindex(v) < i
         throw(BoundsError())
     end
     return unsafe_rank1(v, i)
@@ -115,8 +115,8 @@ function ensureroom!(v::CompactBitVector, len::Int)
     len_lbs = length(v.lbs)
     resize!(v.sbs, n_required_sbs)
     resize!(v.lbs, div(n_required_sbs - 1, 4) + 1)
-    for i in len_sbs+1:endof(v.sbs) v.sbs[i] = 0 end
-    for i in len_lbs+1:endof(v.lbs) v.lbs[i] = 0 end
+    for i in len_sbs+1:lastindex(v.sbs) v.sbs[i] = 0 end
+    for i in len_lbs+1:lastindex(v.lbs) v.lbs[i] = 0 end
     @assert length(v.sbs) ≤ length(v.lbs) * n_smallblocks_per_largeblock
     return v
 end

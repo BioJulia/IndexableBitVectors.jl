@@ -8,7 +8,7 @@
 # https://github.com/herumi/cybozulib/blob/master/include/cybozu/sucvector.hpp
 # Note that in v0.3 blocks will not be packed in a vector.
 
-immutable Block
+struct Block
     # large block
     large::UInt32
     # small blocks
@@ -55,7 +55,7 @@ Let `n` be the length of a `SucVector`, the asymptotic query times are
 * rank: `O(1)`
 * select: `O(log n)`
 """
-type SucVector <: AbstractIndexableBitVector
+struct SucVector <: AbstractIndexableBitVector
     blocks::Vector{Block}
     len::Int
 end
@@ -65,13 +65,13 @@ SucVector() = SucVector(Block[], 0)
 Base.copy(bv::SucVector) = SucVector(copy(bv.blocks), bv.len)
 
 # data size of payload in bytes
-sizeof(bv::SucVector) = sizeof(bv.blocks)
+Base.sizeof(bv::SucVector) = sizeof(bv.blocks)
 
-function convert(::Type{SucVector}, vec::AbstractVector{Bool})
+function SucVector(vec::AbstractVector{Bool})
     len = length(vec)
     @assert len ≤ 2^40
     n_blocks = cld(len, bits_per_block)
-    blocks = Vector{Block}(n_blocks)
+    blocks = Vector{Block}(undef, n_blocks)
     offset = 0
     for i in 1:n_blocks
         chunks = read_4chunks(vec, (i - 1) * bits_per_block + 1)
@@ -83,13 +83,15 @@ function convert(::Type{SucVector}, vec::AbstractVector{Bool})
     return SucVector(blocks, len)
 end
 
+Base.convert(::Type{SucVector}, vec::AbstractVector{Bool}) = SucVector(vec)
+
 function read_chunk(src, from::Int)
     @assert bits_per_chunk == sizeof(UInt64) * 8
     chunk = UInt64(0)
     for k in 0:bits_per_chunk-1
         i = from + k
         chunk >>= 1
-        if i ≤ endof(src) && src[i]
+        if i ≤ lastindex(src) && src[i]
             chunk |= UInt64(1) << 63
         end
     end
@@ -123,9 +125,9 @@ function read_4chunks(src::BitVector, from::Int)
     return a, b, c, d
 end
 
-length(v::SucVector) = v.len
+Base.length(v::SucVector) = v.len
 
-@inline function getindex(v::SucVector, i::Integer)
+@inline function Base.getindex(v::SucVector, i::Integer)
     checkbounds(v, i)
     return unsafe_getindex(v, i)
 end
