@@ -394,7 +394,7 @@ end
 
 @assert blocksizeof(RRR) ≤ blocksizeof(LargeRRR)
 
-const Comb = CombinationTable([binomial(t, k) for t in 0:blocksizeof(LargeRRR), k in 0:blocksizeof(LargeRRR)])
+const Comb = CombinationTable([binomial(Int64(t), Int64(k)) for t in 0:blocksizeof(LargeRRR), k in 0:blocksizeof(LargeRRR)])
 
 # enumeration of bit patterns for blocks, sorted by class and r-index
 const E, K = let
